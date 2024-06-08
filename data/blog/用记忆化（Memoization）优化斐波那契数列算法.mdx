@@ -1,0 +1,173 @@
+---
+title: 'Fib Memoization'
+
+date: '2024-06-08'
+
+lastmod: '2024-06-08'
+
+tags: ['算法', '动态规划', '性能优化']
+
+draft: false
+
+summary: '今天我们来讲讲动态规划中很重要的一部分，memoization。详细解析如何用memoization优化斐波那契数列算法，以及如何计算递归解法的时间和空间复杂度。'
+---
+
+## 前言
+
+在学习掘金[前端算法与数据结构面试](https://juejin.cn/book/6844733800300150797?enter_from=course_center&utm_source=course_center)这本小册的时候，啃到动态规划部分有点啃不动。在youtube找了一个[很好的视频](https://www.youtube.com/watch?v=oBt53YbR9Kk&list=PLtc4S9-a2fprxWMv_ZR0ggxJOdXAT_Gd5&index=22)专门讲动态规划，这个系列将会记录我学习动态规划的笔记与心得。
+
+## 斐波那契数列
+
+要打开动态规划（Dynamic Programming）的大门，我们首先来看一下斐波那契数列，根据维基百科上的定义，斐波那契数列由0和1开始，之后的斐波那契数由之前的两数相加得出，由此可知斐波那契数列是：
+
+```
+1、1、2、3、5、8、13、21、24、55、89、144、233...
+```
+
+在数学上，斐波那契数以递归的方法来定义：
+
+```
+F(0)=0
+F(1)=1
+F(n) =F(n-1)+F(n-1)
+```
+
+leetcode第509题就以此为题干：
+
+> The Fibonacci numbers, commonly denoted F(n) form a sequence, called the Fibonacci sequence, such that each number is the sum of the two preceding ones, starting from 0 and 1. That is,
+>
+> ```
+> F(0) = 0, F(1) = 1
+> F(n) = F(n - 1) + F(n - 2), for n > 1.
+>
+> ```
+>
+> Given n, calculate F(n).
+
+我们试着用递归的方式来解这道题：
+
+```javascript
+const fib = (n) => {
+  if (n <= 2) return 1
+  return fib(n - 1) + fib(n - 2)
+}
+```
+
+打印`fib(5)`, `fib(6)`, `fib(7)`, 都没问题，分别输出5、8、13，但是一旦打印较大的数字例如`fib(50)`就会变得很慢，在性能上有大问题。提前告诉大家，它的时间复杂度是`O(2^n)`。
+
+<Image alt="treeVisual" src="/static/images/blog-06-2024/treeVisual.png" width={500} height={300} />
+
+## 时间复杂度和空间复杂度分析
+
+在解释为什么上面那种解法时间复杂度大之前，我们先来看几组例子分析一下时间空间复杂度，算是热热身，真正搞懂递归的时间空间复杂度怎么算。
+
+**例1**
+
+```javascript
+const foo = (n) => {
+  if (n <= 1) return
+  foo(n - 1)
+}
+```
+
+对于`foo(5)`来说，函数跑了`5`次。那么对于`f(n)`来说就会跑`n`次。所以时间复杂度是`O(n)`。
+
+那么空间复杂度呢？对于每次调用，函数执行上下文都会被推入调用栈，所以空间复杂度也是`O(n)`。
+
+**例2**
+
+```javascript
+const foo = (n) => {
+  if (n <= 1) return
+  foo(n - 1)
+}
+```
+
+对于`foo(6)`跑了4次，对于`foo(7)`会跑5次，对于`foo(8)`会跑5次，对于`foo(9)` 会跑6次......总结一下规律就是`Math.ceil(n/2) + 1`, 时间复杂度是大约是`O (n/2)`，根据Big O Notation，我们在计算时间复杂度的时候，可以把常数项忽略，所以这个函数的时间复杂度大约也是`O(n)`。此时时间复杂度也是`O(n)`。
+
+**例3**
+
+```javascript
+const dib = (n) => {
+  if (n <= 1) return
+  dib(n - 1)
+  dib(n - 1)
+}
+```
+
+画图：
+
+<Image
+  alt="treeVisual2"
+  src="/static/images/blog-06-2024/treeVisual2.png"
+  width={500}
+  height={300}
+/>
+
+可以看到树的高度是n，对于第一层来说`2^0`个节点，对于第二层有`2^1`个节点，第三层`2^2`，第n层`2^n`，一个节点意味着函数被调用一次。所以在这个算法中，时间复杂度为`O(2^n)`。
+
+但这次空间复杂度不是`O(2^n)`，我们主要看调用栈里的函数最多的时候有多少个，它和输入n的关系是什么。
+
+当我们递归第一行`dib(n-1)`的时候，它会一直行进到`dib(1-1)`，也就是叶子节点那里。此时调用栈中大约有n个函数，再继续就要把dib(0)出栈，然后走下一行的`dib(n-1)`，如上图所画的绿色路线。所以这个算法的空间复杂度最大是`O(n)`。
+
+**例4**
+
+```javascript
+const lib = (n) => {
+  if (n <= 1) return
+  lib(n - 2)
+  lib(n - 2)
+}
+```
+
+对于这个例子，它和上面唯一的区别就是，n-1变成了n-2。
+
+相应的，时间复杂度是O(2^(n/2))，空间复杂度是O(n/2)，简化一下和上个例子的时间空间复杂度还是一样的。
+
+最后看回我们斐波那契数列算法：
+
+```javascript
+const fib = (n) => {
+  if (n <= 2) return 1
+  return fib(n - 1) + fib(n - 2)
+}
+```
+
+它的时间复杂度应该介于dib和lib之间，而dib和lib都是`2^n`，可以推想fib的时间复杂度也是`2^n`。
+
+对于`fib(7)`，函数调用最满的时候，时间复杂度也是`2^n`。空间复杂度大约是`O(n)`，调用栈里最多有n个函数。
+
+在计算fib(50)的时候，函数跑了很多次，如下：
+
+<Image alt="duplicated" src="/static/images/blog-06-2024/duplicated.png" width={500} height={300} />
+
+当我们以`fib(7)`为例画出递归树图之后会发现，很多节点的值被重复计算了，浪费了大量计算资源。
+
+## 用记忆化（Memoization）优化斐波那契数列算法
+
+如果我们能记住已经计算过的结果，就能大大提高算法速度。我们往fib函数加上第二个参数memo，如下：
+
+```javascript
+const fib = (n, memo = {}) => {
+  if (n in memo) return memo[n]
+  if (n <= 2) return 1
+  memo[n] = fib(n - 1, memo) + fib(n - 2, memo)
+  return memo[n]
+}
+```
+
+如果在memo里能找到这个`n`，就返回`memo[n]`，如果找不到，就把这次返回的结果记录到`memo[n]`里。
+这样我们就避免了重复计算。
+
+我们来计算一下这个解法的时间和空间复杂度，以`fib(6)`为例：
+
+<Image alt="treeVisual" src="/static/images/blog-06-2024/memoized.png" width={500} height={300} />
+
+再看`fib(7)``fib(8)``fib(9)`，我们会发现函数被调用的次数实际上就是`2n`，被推入栈的函数数量也是`2n`，所以这个解法的时间和空间复杂度都是`O(n)`。
+
+<Image
+  alt="treeVisual"
+  src="/static/images/blog-06-2024/fib-memoized.png"
+  width={500}
+  height={300}
+/>
