@@ -1,20 +1,22 @@
 ---
-title: 'Fib Memoization'
+title: 'Dynamic Programming - Memoization'
 
 date: '2024-06-08'
 
-lastmod: '2024-06-08'
+lastmod: '2024-06-10'
 
 tags: ['算法', '动态规划', '性能优化']
 
 draft: false
 
-summary: '今天我们来讲讲动态规划中很重要的一部分，memoization。详细解析如何用memoization优化斐波那契数列算法，以及如何计算递归解法的时间和空间复杂度。'
+summary: '深入解析top-down形式的dynamic programming(dp)，也就是memoization。我们会解决一道道的经典题目，例如斐波那契数列，gridTraveler，canSum, howSum, bestSum等等，彻底理解和掌握memoization。'
 ---
 
-## 前言
+## Introduction
 
-在学习掘金[前端算法与数据结构面试](https://juejin.cn/book/6844733800300150797?enter_from=course_center&utm_source=course_center)这本小册的时候，啃到动态规划部分有点啃不动。在youtube找了一个[很好的视频](https://www.youtube.com/watch?v=oBt53YbR9Kk&list=PLtc4S9-a2fprxWMv_ZR0ggxJOdXAT_Gd5&index=22)专门讲动态规划，这个系列将会记录我学习动态规划的笔记与心得。
+在学习掘金[前端算法与数据结构面试](https://juejin.cn/book/6844733800300150797?enter_from=course_center&utm_source=course_center)这本小册的时候，啃到动态规划部分有点啃不动。在youtube找了一个[很好的视频](https://www.youtube.com/watch?v=oBt53YbR9Kk&list=PLtc4S9-a2fprxWMv_ZR0ggxJOdXAT_Gd5&index=22)专门讲动态规划，这个系列将会记录我学习动态规划的笔记与心得。视频把动态规划解法分为了memoization和tabulation两种形式，这篇文章主要讲memoization。
+
+<TOCInline toc={props.toc} exclude="Introduction" />
 
 ## 斐波那契数列
 
@@ -44,6 +46,8 @@ leetcode第509题就以此为题干：
 >
 > Given n, calculate F(n).
 
+### 递归解法
+
 我们试着用递归的方式来解这道题：
 
 ```javascript
@@ -57,7 +61,7 @@ const fib = (n) => {
 
 <Image alt="treeVisual" src="/static/images/blog-06-2024/treeVisual.png" width={500} height={300} />
 
-## 时间复杂度和空间复杂度分析
+### 复杂度分析
 
 在解释为什么上面那种解法时间复杂度大之前，我们先来看几组例子分析一下时间空间复杂度，算是热热身，真正搞懂递归的时间空间复杂度怎么算。
 
@@ -143,7 +147,7 @@ const fib = (n) => {
 
 当我们以`fib(7)`为例画出递归树图之后会发现，很多节点的值被重复计算了，浪费了大量计算资源。
 
-## 用记忆化（Memoization）优化斐波那契数列算法
+### Memoization解法
 
 如果我们能记住已经计算过的结果，就能大大提高算法速度。我们往fib函数加上第二个参数memo，如下：
 
@@ -171,3 +175,70 @@ const fib = (n, memo = {}) => {
   width={500}
   height={300}
 />
+
+## gridTraveler
+
+### 问题描述
+
+gridTraveler是一个经典的动态规划问题，题目是这样的：
+
+There is a robot on an `m x n` grid. The robot is initially located at the top-left corner (i.e., `grid[0][0]`).
+The robot tries to move to the bottom-right corner (i.e., `grid[m - 1][n - 1]`).
+The robot can only move either down or right at any point in time.
+Given the two integers `m` and `n`, return the number of possible unique paths that the robot can take to reach the bottom-right corner.
+The test cases are generated so that the answer will be less than or equal to `2 * 109`.
+
+<Image
+  alt="treeVisual"
+  src="/static/images/blog-06-2024/grid-traveler1.png"
+  width={300}
+  height={300}
+/>
+
+我们可以想象有一个绿色的小人站在左上角，他唯一能做的选择是往下或者往右走，直到走到右下角。我们可以用递归的方式来解这道题：
+
+如果他如上图向下走了一步，这个问题就可以变成是`3*2`格子的问题，如果他向右走了一步，这个问题就可以变成是`2*3`格子的问题。他可以走到右下角的所有方式等于向下走的方式加上向右走的方式。
+
+随着他一直走，最终会走到边缘情况例如`1*1`的格子，这个时候就只有一种走法。如果是`0*1`或者`1*0`的格子，就是没有走法。
+
+### 递归解法
+
+根据以上的描述，我们可以写一个最简单的写法：
+
+```javascript
+function gridTraveler(m, n) {
+  if (m == 1 && n == 1) return 1
+  if (m == 0 || n == 0) return 0
+  return gridTraveler(m - 1, n) + gridTraveler(m, n - 1)
+}
+```
+
+这种解法确实能够解决问题，但是对于较大的网格，计算就会很慢，我们可以看看下面这张树状图：
+
+<Image
+  alt="treeVisual"
+  src="/static/images/blog-06-2024/grid-traveler2.png"
+  width={500}
+  height={300}
+/>
+
+图中`gridTraveler(1,2)`、`gridTraveler(2,1)`、`gridTraveler(1,1)`等都被重复计算了，我们可以用memoization来优化这个问题。
+
+### Memoization解法
+
+```javascript
+function gridTraveler(m, n, memo = {}) {
+  const key = m + ',' + n
+  if (key in memo) return memo[key]
+  if (m == 1 && n == 1) return 1
+  if (m == 0 || n == 0) return 0
+  memo[key] = gridTraveler(m - 1, n, memo) + gridTraveler(m, n - 1, memo)
+  return memo[key]
+}
+```
+
+往`gridTraveler` 里加上第三个参数 `memo`，这样我们就能记住已经计算过的结果，避免重复计算。key使用`m + ',' + n`来表示，这样就能唯一标识一个路线。
+
+### 复杂度分析
+
+对于时间复杂度来说，是`O(m*n)`，因为我们最多会调用`m*n`次函数。对于空间复杂度来说，是`O(m+n)`，因为我们最多会推入`m+n`个函数。
