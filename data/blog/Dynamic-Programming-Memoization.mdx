@@ -165,14 +165,14 @@ const fib = (n, memo = {}) => {
 
 我们来计算一下这个解法的时间和空间复杂度，以`fib(6)`为例：
 
-<Image alt="treeVisual" src="/static/images/blog-06-2024/memoized.png" width={500} height={300} />
+<Image alt="treeVisual" src="/static/images/blog-06-2024/memoized.png" width={400} height={300} />
 
 再看`fib(7)``fib(8)``fib(9)`，我们会发现函数被调用的次数实际上就是`2n`，被推入栈的函数数量也是`2n`，所以这个解法的时间和空间复杂度都是`O(n)`。
 
 <Image
   alt="treeVisual"
   src="/static/images/blog-06-2024/fib-memoized.png"
-  width={500}
+  width={400}
   height={300}
 />
 
@@ -241,4 +241,103 @@ function gridTraveler(m, n, memo = {}) {
 
 ### 复杂度分析
 
-对于时间复杂度来说，是`O(m*n)`，因为我们最多会调用`m*n`次函数。对于空间复杂度来说，是`O(m+n)`，因为我们最多会推入`m+n`个函数。
+对于时间复杂度来说，取决于需要计算的字问题数量，在这个问题中，我们需要计算`m*n`个字问题，每个子问题只需要计算一次就会被记入缓存，无需再次计算。所以时间复杂度是`O(m*n)`。
+对于空间复杂度来说，对于一个 m x n 的网格，我们最多需要存储 m x n 个子问题的结果，因为每个位置都对应着一个子问题。因此，memo 对象的空间复杂度与需要计算的子问题数量成正比。
+空间复杂度为`O(m*n)`。
+
+## Memoization Recipe
+
+从上面两个例子，我们可以总结出使用memoization解决动态规划问题的两个步骤：
+
+1. Make it work
+
+- visualise the problem as a treeVisual
+- implement the treeVisual using recursion
+  - think about leaf as edge cases
+- test it
+
+2. Make it efficient
+
+- add memo object
+- add base case to return memo values
+- store return values into memo
+
+## canSum
+
+### 问题描述
+
+Write a function `canSum(targetSum, numbers)` that takes in a targetSum and an array of numbers as arguments.
+The function should return a boolean indicating whether or not it is possible to generate the targetSum using numbers from the array.
+
+You may use an element of the array as many times as needed.
+You may assume that all input numbers are nonnegative.
+
+> canSum(7, [5,3,4,7]) -> true
+> canSum(6, [5,3]) -> false
+
+### 思路分析
+
+以简单的例子`canSum(7, [5,3,4,7])`为例，我们可以用递归的方式来解决这个问题。我们可以把这个问题想象成一个树状图，每个节点都是一个`targetSum`，每个节点的子节点是`targetSum - num`，num是数组里的一个元素。
+根节点是最开始的`targetSum`，如果有一个节点的值是0，就返回true，如果最后的叶子结点会是负数，就返回false。
+
+如下图：
+
+<Image alt="canSum visual" src="/static/images/blog-06-2024/canSum1.png" width={500} height={300} />
+
+### 递归解法
+
+```javascript
+const canSum = (targetSum, numbers) => {
+  if (targetSum == 0) return true
+  if (targetSum < 0) return false
+
+  for (let num of numbers) {
+    const remainder = targetSum - num
+    // 只要这个for loop里有一个true，就返回true，false的话继续循环
+    if (canSum(remainder, numbers) == true) {
+      return true
+    }
+  }
+  // 直到for loop结束，都没有返回true，就返回false
+  return false
+}
+```
+
+如果我们尝试`console.log(canSum(300, [7,14]))`会发现这个函数运行的很慢，来分析一下它的复杂度。
+
+首先是空间复杂度，可以通过树的高度，也就是递归调用栈的深度来计算。对于`canSum(7, [5,3,4,7])`来说，树的高度最多是7，所以空间复杂度是`O(m)`。
+然后是时间复杂度，观察影响分叉的因素，从每上一层到下一层，节点的数量如何变化。每一层的节点数量大约是上一层`*n`的关系，而树的高度又是`m`，所以时间复杂度是`O(n^m)`。
+
+### Memoization解法
+
+用这种解法的时间复杂度很高，说明有很多重复计算，如下图：
+
+<Image alt="canSum visual" src="/static/images/blog-06-2024/canSum2.png" width={500} height={300} />
+
+还是用memo来记忆，代码如下：
+
+```diff-js
+- const canSum = (targetSum, numbers) => {
++ const canSum = (targetSum, numbers, memo={}) => {
++ if(targetSum in memo) return memo[targetSum]
+  if(targetSum == 0) return true
+  if(targetSum < 0) return false
+
+  for (let num of numbers) {
+    const remainder = targetSum - num
+-     if(canSum(remainder, numbers) == true) {
++     if(canSum(remainder, numbers, memo) == true) {
++     memo[targetSum] = true
+      return true
+    }
+  }
++ memo[targetSum] = false
+  return false
+}
+```
+
+分析时间复杂度，我们把targetSum当作m，numbers的长度当作n，
+在最坏的情况下，每个targetSum都需要计算一次，而对于每个targetSum，
+我们都需要遍历一遍numbers，所以时间复杂度是`O(n*m)`。
+
+分析空间复杂度，调用栈中最多会推入m个函数，或者说`memo`对象的空间复杂度与`targetSum`成正比，所以空间复杂度是`O(m)`。
