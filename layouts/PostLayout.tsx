@@ -100,7 +100,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                   Discuss on Twitter
                 </Link> */}
                 {` • `}
-                <Link href={editUrl(filePath)}>View on GitHub</Link>
+                <Link href={editUrl(filePath)}>Discuss on GitHub</Link>
               </div>
               {/* {siteMetadata.comments && (
                 <div
