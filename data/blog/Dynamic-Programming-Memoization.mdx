@@ -182,11 +182,11 @@ const fib = (n, memo = {}) => {
 
 gridTraveler是一个经典的动态规划问题，题目是这样的：
 
-There is a robot on an `m x n` grid. The robot is initially located at the top-left corner (i.e., `grid[0][0]`).
-The robot tries to move to the bottom-right corner (i.e., `grid[m - 1][n - 1]`).
-The robot can only move either down or right at any point in time.
-Given the two integers `m` and `n`, return the number of possible unique paths that the robot can take to reach the bottom-right corner.
-The test cases are generated so that the answer will be less than or equal to `2 * 109`.
+> There is a robot on an `m x n` grid. The robot is initially located at the top-left corner (i.e., `grid[0][0]`).
+> The robot tries to move to the bottom-right corner (i.e., `grid[m - 1][n - 1]`).
+> The robot can only move either down or right at any point in time.
+> Given the two integers `m` and `n`, return the number of possible unique paths that the robot can take to reach the bottom-right corner.
+> The test cases are generated so that the answer will be less than or equal to `2 * 109`.
 
 <Image
   alt="treeVisual"
@@ -305,14 +305,12 @@ const canSum = (targetSum, numbers) => {
 
 如果我们尝试`console.log(canSum(300, [7,14]))`会发现这个函数运行的很慢，来分析一下它的复杂度。
 
+<Image alt="canSum visual" src="/static/images/blog-06-2024/canSum2.png" width={500} height={300} />
+
 首先是空间复杂度，可以通过树的高度，也就是递归调用栈的深度来计算。对于`canSum(7, [5,3,4,7])`来说，树的高度最多是7，所以空间复杂度是`O(m)`。
 然后是时间复杂度，观察影响分叉的因素，从每上一层到下一层，节点的数量如何变化。每一层的节点数量大约是上一层`*n`的关系，而树的高度又是`m`，所以时间复杂度是`O(n^m)`。
 
 ### Memoization解法
-
-用这种解法的时间复杂度很高，说明有很多重复计算，如下图：
-
-<Image alt="canSum visual" src="/static/images/blog-06-2024/canSum2.png" width={500} height={300} />
 
 还是用memo来记忆，代码如下：
 
@@ -341,3 +339,138 @@ const canSum = (targetSum, numbers) => {
 我们都需要遍历一遍numbers，所以时间复杂度是`O(n*m)`。
 
 分析空间复杂度，调用栈中最多会推入m个函数，或者说`memo`对象的空间复杂度与`targetSum`成正比，所以空间复杂度是`O(m)`。
+
+## howSum
+
+### 问题描述
+
+> Write a function `howSum(targetSum, numbers)` that takes in a targetSum and an array of numbers as arguments.
+> The function should return an array containing any combination of elements that add up to exactly the targetSum.
+> If there is no combination that adds up to the targetSum, then return null.
+
+给定一个目标和`targetSum`和一个数组`numbers`，返回一个数组，数组里的元素相加等于`targetSum`。如果没有这样的组合，返回null。
+
+`howSum`和`canSum`很类似，区别仅仅在于返回值不是布尔值，而是满足条件的数组，且只需要返回一个就行。
+
+### 递归解法
+
+```javascript
+function howSum(targetSum, numbers) {
+  // 如果targetSum被一直减到0，就返回空数组，准备好接收结果
+  if (targetSum == 0) return []
+  // 如果targetSum被一直减到小于0，就返回null
+  if (targetSum < 0) return null
+
+  for (let num of numbers) {
+    const remainder = targetSum - num
+    const res = howSum(remainder, numbers)
+    if (res !== null) {
+      return [...res, num]
+    }
+  }
+
+  // 如果for loop结束，都没有返回任何满足条件的数组，就返回null
+  return null
+}
+```
+
+但它依然有重复计算的问题。如果`targetSum`为`m`，数组`numbers`的长度为`n`。就时间复杂度而言，在递归树中，每个节点都有`n`个子节点可以选择，且该函数探索了元素的所有可能组合，递归树的高度可以达到`m`，所以时间复杂度是`O(n^m)`。
+就空间复杂度而言，树的深度是m，调用栈最多有m个函数，空间复杂度为m。
+
+### Memoization解法
+
+```javascript
+function howSum(targetSum, numbers, memo = {}) {
+  if (targetSum in memo) return memo[targetSum]
+  if (targetSum == 0) return []
+  if (targetSum < 0) return null
+
+  for (let num of numbers) {
+    const remainder = targetSum - num
+    const res = howSum(remainder, numbers, memo)
+    if (res !== null) {
+      memo[targetSum] = [...res, num]
+      return memo[targetSum]
+    }
+  }
+
+  memo[targetSum] = null
+  return null
+}
+```
+
+为什么这个解法的时间复杂度是`O(n*m)`，而不是`O(n^m)`呢？因为我们在memo里存储了每个`targetSum`的结果，所以不需要重复计算。
+每个`targetSum`最多只会被计算一次，每次会遍历`numbers`数组，所以时间复杂度是`O(n*m)`。
+
+## bestSum
+
+Write a function `bestSum(targetSum, numbers)` that takes in a targetSum and an array of numbers as arguments.
+
+The function should return an array containing the shortest combination of numbers that add up to exactly the targetSum.
+
+If there is a tie for the shortest combination, you may return any one of the shortest.
+
+### 递归解法
+
+和之前的`howSum`代码很类似，只是在返回的时候，我们要比较当前的组合和之前的组合，如果当前组合比之前的组合短，或者之前的组合是null，就更新最短组合。
+
+```javascript
+function bestSum(targetSum, numbers) {
+  if (targetSum == 0) return []
+  if (targetSum < 0) return null
+
+  let shortestCombination = null
+
+  for (let num of numbers) {
+    const remainder = targetSum - num
+    const res = bestSum(remainder, numbers)
+    if (res !== null) {
+      const combination = [...res, num]
+      if (shortestCombination === null || combination.length < shortestCombination.length) {
+        shortestCombination = combination
+      }
+    }
+  }
+
+  return shortestCombination
+}
+```
+
+这个解法的时间复杂度是`O(n^m * m)`，空间复杂度是`O(m^2)`。
+对于时间复杂度，`n^m`是因为递归树的高度是m，每个节点有n个子节点，`m`是因为我们要存储每个`targetSum`的结果。存储这个结果的空间复杂度是`O(m)`。如果没有这样的组合，返回null。
+对于空间复杂度，`m^2`是因为我们要存储每个`targetSum`的结果，每个`targetSum`的结果是一个长度为`m`的数组。
+
+### Memoization解法
+
+```diff-js
+- function bestSum(targetSum, numbers) {
++ function bestSum(targetSum, numbers, memo={}) {
+  if(targetSum in memo) return memo[targetSum]
+  if(targetSum == 0) return []
+  if(targetSum < 0 ) return null
+
+
+  let shortestCombination = null
+
+  for (let num of numbers) {
+    const remainder = targetSum - num
+- const res = bestSum(remainder, numbers)
++ const res = bestSum(remainder, numbers, memo)
+
+
+    if(res !== null) {
+      const combination = [...res, num]
+      if(shortestCombination === null || combination.length < shortestCombination.length) {
+        shortestCombination = combination
+      }
+    }
+  }
++ memo[targetSum] = shortestCombination
+  return shortestCombination
+}
+```
+
+对于时间复杂度而言，每个`targetSum`最多只会被计算一次，每次会遍历`numbers`数组，所以时间复杂度是`O(n*m*m)`。
+`n*m`是因为递归树的高度是m，每个节点有n个子节点，`m`是因为我们要做`[...res, num]`这个操作，这个操作的时间复杂度是`O(m)`，因为`res`的长度最多是`m`。
+
+对于计算空间复杂度而言，对于每个`targetSum`，我们都要存储一个数组，数组的长度最多是`m`，所以空间复杂度是`O(m^2)`。
