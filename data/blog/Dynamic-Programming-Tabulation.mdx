@@ -1,0 +1,154 @@
+---
+title: 'Dynamic Programming - Tabulation 动态规划 - 列表法'
+
+date: '2024-06-17'
+
+lastmod: '2024-06-17'
+
+tags: ['算法', '动态规划', '性能优化']
+
+draft: false
+
+summary: ''
+---
+
+## Introduction
+
+之前一篇blog我们介绍了memoization，今天我们来介绍另一种动态规划的方法，tabulation。tabulation是一种自底向上的方法，我们从最小的问题开始，逐步解决大问题。tabulation的优点是不需要递归，不需要额外的空间，所以在一些情况下，tabulation的性能会更好。
+
+<TOCInline toc={props.toc} exclude="Introduction" />
+
+## fib tabulation 斐波那契数
+
+Write a function `fib(n)` that takes in a number as an argument. The function should return the n-th number of the Fibonacci sequence.
+
+The 0th number of the sequence is 0.
+The 1st number of the sequence is 1.
+
+To generate the next number of the sequence, we sum the previous two.
+
+### 解题思路
+
+以计算`fib(6)` 为例，我们先画出一个数组，数组的index表示n，数组的值表示`fib(n)`。我们先初始化数组的前两个值，然后逐步计算后面的值。
+
+| 0   | 1   | 2   | 3   | 4   | 5   | 6   |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| 0   | 1   | 0   | 0   | 0   | 0   | 0   |
+
+当我们遍历这个表格，想象有一个指针在index`0`上面，对于`fib(0)`来说，`fib(1)`和`fib(2)`所在的表格都需要加上它。
+接着指针到了index`1`，对于`fib(1)`来说，`fib(2)`和`fib(3)`所在的单元格都需要加上它。
+
+表格变成：
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 1 | 1 | 1 | 0 | 0 | 0 |
+
+接着指针到了index`2`，对于`fib(2)`来说，`fib(3)`和`fib(4)`所在的单元格都需要加上它。
+
+表格变成：
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 1 | 1 | 2 | 1 | 0 | 0 |
+
+接着指针到了index`3`，对于`fib(3)`来说，`fib(4)`和`fib(5)`所在的单元格都需要加上它。
+
+表格变成：
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 1 | 1 | 2 | 3 | 2 | 0 |
+
+以此类推，
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 0 | 1 | 1 | 2 | 3 | 5 | 3 |
+
+| 0   | 1   | 2   | 3   | 4   | 5   | 6   |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| 0   | 1   | 1   | 2   | 3   | 5   | 8   |
+
+我们可以得到`fib(6)`的值为`8`。
+
+### 代码实现
+
+```javascript
+const fib = (n) => {
+  const table = Array(n + 1).fill(0)
+  table[1] = 1
+  for (let i = 0; i <= n; i++) {
+    //当前遍历到的fib[i]的值会被加给table[i+1]和table[i+2]
+    table[i + 1] += table[i]
+    table[i + 2] += table[i]
+  }
+  return table[n]
+}
+```
+
+### 复杂度分析
+
+我们没有使用递归，而是遍历这个数组，所以时间复杂度为`O(n)`，空间复杂度为`O(n)`。
+这是一个自底向上的方法，我们从最小的问题开始，逐步解决大问题。
+
+## gridTraveler tabulation 走格子
+
+Say that you are a traveler on a 2D grid. You begin in the top-left corner and your goal is to travel to the bottom-right corner. You may only move down or right.
+
+In how many ways can you travel to the goal on a grid with dimensions m \* n?
+
+Write a function `gridTraveler(m, n)` that calculates this
+
+你是一个旅行者，你在一个二维的格子上。你从左上角开始，你的目标是到达右下角。你只能向下或者向右移动。在一个m \* n的格子上，你有多少种方法可以到达目标？
+
+### 解题思路
+
+我们可以用一个二维数组来表示这个问题，数组的index表示m和n，数组的值表示`gridTraveler(m, n)`。如下图：
+
+<Image
+  alt="grid traveler tabulation"
+  width={400}
+  height={400}
+  src="/static/images/blog-06-2024/tabulation1.png"
+/>
+
+我们将一个格子一个格子遍历，每个格子的数值都可以成为它右边和下面格子值的贡献者。例如上图我们会把第一个格子的`0`加给右边和下面的格子。
+第一行第一列都是`0`，因为`gridTraveler(0,n)`和`gridTraveler(m,0)`都是`0`。
+遍历完第一行之后到了第二行，`(1,1)`的值是`1`，会被加给右边和下面的格子，它们俩都变成了`1`。
+以此类推，一行一行遍历，把值加给右边和下面的格子，最后我们可以得到`gridTraveler(3,3)`的值为`6`。
+如下图：
+
+<Image
+  alt="grid traveler tabulation"
+  width={400}
+  height={400}
+  src="/static/images/blog-06-2024/tabulation2.png"
+/>
+
+### 代码实现
+
+```javascript
+const gridTraveler = (m, n) => {
+  const table = Array(m + 1)
+    .fill()
+    .map(() => Array(n + 1))
+    .fill(0)
+  table[1][1] = 1
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= n; j++) {
+      const current = table[i][j]
+      if (i + 1 <= m) table[i + 1][j] += current
+      if (j + 1 <= n) table[i][j + 1] += current
+    }
+  }
+  return table[m][n]
+}
+```
+
+### 复杂度分析
+
+我们遍历了一个`m*n`的二维数组，所以时间复杂度为`O(m*n)`，空间复杂度为`O(m*n)`。
+
+## Tabulation Recipe 列表法总结
+
+- 创建一个表格，表格的index表示问题的规模，表格的值表示问题的解。
+- 初始化表格的第一个值，根据问题的不同，初始化的值可能不同。通常是0或者1。
+- 遍历这个表格，对于每一个值，计算它的解，然后把解加给表格中的其他值。
+- 返回表格中最后一个值。
