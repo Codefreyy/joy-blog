@@ -1,0 +1,502 @@
+---
+title: 'JavaScript数据类型及判断'
+
+date: '2024-06-17'
+
+lastmod: '2024-06-17'
+
+tags: ['JavaScript']
+
+draft: false
+
+summary: ''
+---
+
+## Introduction
+
+JavaScript中一共有8种基本的数据类型,分别是：`Number`, `String`, `Boolean`, `Null`, `Undefined`, `Symbol`, `BigInt`, `Object`。
+其中`Number`, `String`, `Boolean`, `Null`, `Undefined`, `Symbol`, `BigInt`是基本数据类型，`Object`是引用数据类型。
+
+我们可以将任何类型的值存入变量，例如：
+
+```javascript
+let name = 'joy'
+name = 22
+```
+
+可以修改变量的值为不同类型，允许这种操作的编程语言被称为“动态类型”(dynamiclly typed)。与之相对的`Java``C``C++`等语言是“静态类型”(statically typed)。
+
+<TOCInline toc={props.toc} exclude="Introduction" />
+
+## Number类型
+
+JavaScript中的所有数字都是`Number`类型，包括整数和浮点数。例如：
+
+```javascript
+let num = 22
+let num2 = 22.5
+```
+
+除了常规的数字外，JavaScript还有一些特殊的数字值，例如`Infinity`, `-Infinity`, `NaN`。
+
+- Infinity: 表示无穷大，例如`1/0`。
+- -Infinity: 表示无穷小，例如`-1/0`。
+- NaN: 表示不是一个数字，例如`0/0`。
+  - NaN是粘性的，任何对NaN的操作都会返回NaN。
+  - 如果我们在`JavaScript`中做了不合理的数学运算，例如`0/0`，`Infinity-Infinity`，`Math.sqrt(-1)`等，都会返回`NaN`。
+
+## BigInt类型
+
+虽然说`number`也可以存储更大的整数，最多到`7976931348623157 * 10308`，但超出安全整数范围 `±(253-1)` 会出现精度问题，因为并非所有数字都适合固定的 `64` 位存储。因此，可能存储的是“近似值”。
+如下例：
+
+```JavaScript
+const a = 9007199254740991 //安全范围顶
+console.log(9007199254740991 + 1); // 9007199254740992
+console.log(9007199254740991 + 2); // 9007199254740992
+```
+
+两个打印结果都是 `9007199254740992`，这是因为这两个数字已经超出了安全范围，所以会出现精度问题。
+
+在大多数情况下，±(253-1) 范围就足够了，但有时候我们需要整个范围非常大的整数，例如用于密码学或微秒精度的时间戳。这时候就需要 `BigInt` 了。
+
+`BigInt` 是`ES6`中引入的新的数据类型，可以安全存储和操作大整数。`BigInt` 是一种内置对象，它提供了一种方法来表示大于 `253-1` 的整数。`BigInt` 可以表示任意大的整数，没有范围限制，甚至可以超过 `253-1` 的限制。
+通过在数字后面加上 `n` 来创建 `BigInt` 类型的数字，例如：
+
+```JavaScript
+const bigInt = 1234567890123456789012345678901234567890n;
+```
+
+## String类型
+
+`String`类型是字符串类型，用于表示文本数据。字符串可以包含一个或多个字符，可以是字母、数字、符号等。字符串可以使用单引号、双引号或反引号来表示。例如：
+
+```javascript
+let str = 'hello'
+let str1 = 'world'
+let str2 = `hello world ${str}`
+```
+
+反引号(`)可以用来创建多行字符串，也可以在字符串中嵌入变量。例如：
+
+```javascript
+let str = `hello
+world`
+let str1 = `hello ${str}`
+```
+
+在`${}`中可以放入任何表达式，表达式计算结果成为字符串的一部分。
+
+## Boolean类型
+
+boolean类型有两个值：`true`和`false`。例如：
+
+```javascript
+let isTrue = true
+let isFalse = false
+```
+
+布尔值也可以作为比较的结果
+
+```javascript
+let isGreater = 4 > 1
+console.log(isGreater) // true
+```
+
+## Null类型
+
+`null`是一个特殊的值，表示“空”或“未知”。例如：
+
+```javascript
+let age = null
+```
+
+上面的代码表示`age`是未知的。
+
+## Undefined类型
+
+`undefined`表示“未定义”。如果一个变量已经声明但没有赋值，那么它的值就是`undefined`。例如：
+
+```javascript
+let name
+console.log(name) // undefined
+```
+
+我们也可以显式地将一个变量赋值为`undefined`，例如：
+
+```javascript
+let name = undefined
+```
+
+……但是不建议这样做。通常，使用 null 将一个“空”或者“未知”的值写入变量中，而 undefined 则保留作为未进行初始化的事物的默认初始值。
+
+## Symbol类型
+
+`Symbol`是`ES6`中引入的新的数据类型，表示独一无二的值。`Symbol`是一种基本数据类型，不是对象，不能使用`new`关键字创建。
+
+我们可以使用`Symbol()`函数来创建`Symbol`类型的值，例如：
+
+```javascript
+let id = Symbol()
+```
+
+也可以给`Symbol`添加一个描述，例如：
+
+```javascript
+let id = Symbol('id')
+```
+
+`Symbol`的一个主要特点是，它们是独一无二的，即使它们的描述相同，它们也是不同的。例如：
+
+```javascript
+let id1 = Symbol('id')
+let id2 = Symbol('id')
+console.log(id1 == id2) // false
+```
+
+symbol还有以下特点：
+
+1. `symbol`的值不会被自动转为字符串
+   例如：
+
+```javascript
+let id = Symbol('id')
+console.log(id) // Symbol(id)
+console.log(id.toString()) // Symbol(id)
+```
+
+2. `symbol`的值不会被自动转为布尔值
+   例如：
+
+```javascript
+let id = Symbol('id')
+if (id) {
+  console.log(id)
+}
+```
+
+上面的代码不会输出`Symbol(id)`，因为`Symbol`的值不会被自动转为布尔值。
+
+3. `for...in`循环不会遍历`symbol`属性
+   例如：
+
+```javascript
+let id = Symbol('id')
+let user = {
+  name: 'joy',
+  age: 22,
+  [id]: 1,
+}
+for (let key in user) {
+  console.log(key) // name, age
+}
+```
+
+4. 在对象字面量中使用`Symbol`，需要使用方括号括起来
+
+```javascript
+let id = Symbol('id')
+
+let user = {
+  name: 'John',
+  [id]: 123, // 而不是 "id"：123
+}
+```
+
+5. 全局`Symbol`注册表
+   `Symbol`是全局注册的，所以在不同的地方使用相同的描述创建的`Symbol`是相同的。例如：
+
+```javascript
+let id1 = Symbol.for('id') // 如果symbol不存在，则创建一个新的symbol
+let id2 = Symbol.for('id') // 获取到描述为'id'的symbol
+console.log(id1 === id2) // true
+```
+
+## Object类型
+
+`Object`类型是唯一的引用数据类型（引用类型和基本类型的区别在于，基本类型存储的是值，而引用类型存储的是地址。基础类型的值存在栈中，引用类型的值存在堆中。），用于存储多个值。
+
+对象是键值对的集合，其中的值可以是任何数据类型。对象的键是字符串/Symbol，值可以是任何数据类型。
+
+### 创建对象
+
+1. 使用对象字面量
+
+```javascript
+let user = {
+  name: 'joy',
+  age: 22,
+}
+```
+
+2. 使用构造函数
+
+```javascript
+let user = new Object()
+user.name = 'joy'
+user.age = 22
+```
+
+### 访问对象属性
+
+我们可以使用`.`或`[]`来访问对象的属性。例如：
+
+```javascript
+let user = {
+  name: 'joy',
+  age: 22,
+}
+console.log(user.name) // joy
+console.log(user['name']) // joy
+
+let user1 = {}
+user1['likes birds'] = true
+alert(user1['likes birds']) // true
+```
+
+### 删除对象属性
+
+我们可以使用`delete`关键字来删除对象的属性。例如：
+
+```javascript
+let user = {
+  name: 'joy',
+  age: 22,
+}
+delete user.name
+console.log(user) // { age: 22 }
+```
+
+### 计算属性
+
+我们可以使用`[]`来计算属性名。例如：
+
+```javascript
+let fruit = 'apple'
+let bag = {
+  [fruit]: 5,
+}
+console.log(bag.apple) // 5
+```
+
+在`typescript`中，这种写法叫做`索引签名`，可以用来描述对象的索引类型。例如：
+
+```typescript
+interface NumberDictionary {
+  [index: string]: number
+  length: number // 可以，length是number类型
+  name: string // 错误，`name`的类型与索引类型返回值的类型不匹配
+}
+```
+
+### 属性值简写
+
+当对象的属性名和变量名相同时，可以使用属性值简写。例如：
+
+```javascript
+let name = 'joy'
+let age = 22
+let user = {
+  name,
+  age,
+}
+console.log(user) // { name: 'joy', age: 22 }
+```
+
+### 属性名限制
+
+变量名不能是编程语言的某个保留字，如 “for”、“let”、“return” 等…… 但是，对象的属性名没有这个限制。任何字符串都可以作为属性名。例如：
+
+```javascript
+let obj = {
+  for: 1,
+  let: 2,
+  return: 3,
+}
+console.log(obj.for + obj.let + obj.return) // 6
+```
+
+### 属性存在性检查
+
+我们可以使用`in`操作符来检查对象是否包含某个属性。例如：
+
+```javascript
+let user = {
+  name: 'joy',
+  age: 22,
+}
+console.log('name' in user) // true
+console.log('job' in user) // false
+```
+
+#### `for...in`循环
+
+`for...in`循环可以遍历对象的所有可枚举属性。例如：
+
+```javascript
+let user = {
+  name: 'joy',
+  age: 22,
+}
+for (let key in user) {
+  console.log(key) // name, age
+}
+```
+
+## 数据类型判断
+
+### 判断数据类型的方法
+
+1. `typeof`操作符
+   `typeof`是一个一元操作符，放在其单个操作数之前，操作数可以是任意类型。`typeof`返回一个表示操作数类型的字符串。
+   `typeof`能判断所有的值类型和函数，但是无法对`null`, `object`和数组进行区分。
+
+例如：
+
+```javascript
+// 能判断
+console.log(typeof 1) // number
+console.log(typeof 'hello') // string
+console.log(typeof true) // boolean
+console.log(typeof undefined) // undefined
+console.log(typeof Symbol('id')) // symbol
+console.log(typeof function () {}) // function
+// 无法区分，都返回object
+console.log(typeof null) // object
+console.log(typeof {}) // object
+console.log(typeof []) // object
+```
+
+2. `instanceof`操作符
+   `instanceof`能判断**对象**的具体类型，但是不能判断基本类型。**其内部运行机制是判断在其原型链中能否找到该类型的原型**。
+
+```javascript
+console.log([] instanceof Array) // true
+console.log([] instanceof Object) // true
+console.log({} instanceof Object) // true
+console.log(null instanceof Object) // false
+
+function Person() {}
+let p = new Person()
+console.log(p instanceof Person) // true
+```
+
+3. `Object.prototype.toString.call()`
+   所有的对象都有`internal properties`，例如`[[Class]]`，`[[Prototype]]`等。`[[class]]`用来描述对象的类型信息，
+
+当我们调用 `Object.prototype.toString()`时，以下步骤会发生：
+
+1. If the this value is undefined, return "[object Undefined]".
+2. If the this value is null, return "[object Null]".
+3. Let O be ToObject(this value).
+4. Let isArray be IsArray(O).
+5. ReturnIfAbrupt(isArray).
+6. If isArray is true, let builtinTag be "Array".
+7. Else, if O is an exotic String object, let builtinTag be "String".
+8. Else, if O has an [[ParameterMap]] internal slot, let builtinTag be "Arguments".
+9. Else, if O has a [[Call]] internal method, let builtinTag be "Function".
+10. Else, if O has an [[ErrorData]] internal slot, let builtinTag be "Error".
+11. Else, if O has a [[BooleanData]] internal slot, let builtinTag be "Boolean".
+12. Else, if O has a [[NumberData]] internal slot, let builtinTag be "Number".
+13. Else, if O has a [[DateValue]] internal slot, let builtinTag be "Date".
+14. Else, if O has a [[RegExpMatcher]] internal slot, let builtinTag be "RegExp".
+15. Else, let builtinTag be "Object".
+16. Let tag be Get (O, @@toStringTag).
+17. ReturnIfAbrupt(tag).
+18. If Type(tag) is not String, let tag be builtinTag.
+19. Return the String that is the result of concatenating "[object ", tag, and "]".
+
+——— [ECMAScript 2015 Language Specification](https://www.ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+
+简单来说就是，`Object.prototype.toString.call()`会返回一个`[object class]`的字符串，其中`class`是对象的类型。例如：
+
+```javascript
+console.log(Object.prototype.toString.call(1)) // [object Number]
+console.log(Object.prototype.toString.call('hello')) // [object String]
+console.log(Object.prototype.toString.call(true)) // [object Boolean]
+console.log(Object.prototype.toString.call(undefined)) // [object Undefined]
+console.log(Object.prototype.toString.call(Symbol('id'))) // [object Symbol]
+console.log(Object.prototype.toString.call(function () {})) // [object Function]
+console.log(Object.prototype.toString.call(null)) // [object Null]
+console.log(Object.prototype.toString.call({})) // [object Object]
+console.log(Object.prototype.toString.call([])) // [object Array]
+console.log(Object.prototype.toString.call(new Date())) // [object Date]
+console.log(Object.prototype.toString.call(/a/)) // [object RegExp]
+// Arguments
+function f() {
+  console.log(Object.prototype.toString.call(arguments)) // [object Arguments]
+}
+```
+
+## 判断NaN
+
+1. `isNaN`函数
+   `isNaN`函数用来判断一个值是否是`NaN`，它会先将参数转换为数字，然后再判断是否是`NaN`。
+
+```javascript
+console.log(isNaN(NaN)) // true
+console.log(isNaN('hello')) // true
+console.log(isNaN('22')) // false
+console.log(isNaN(22)) // false
+console.log(isNaN(undefined)) // true
+console.log(isNaN(null)) // false
+// 为什么isNaN(null)返回false？ isNaN(undefined)返回true？
+// 因为null会被转换为0，0不是NaN
+// undefined会被转换为NaN
+```
+
+2. `Number.isNaN`函数
+   `Number.isNaN`函数用来判断一个值是否是`NaN`，它不会将参数转换为数字，只有在参数是`NaN`时才返回`true`。
+
+```javascript
+console.log(Number.isNaN(NaN)) // true
+console.log(Number.isNaN('hello')) // false
+console.log(Number.isNaN('22')) // false
+console.log(Number.isNaN(22)) // false
+console.log(Number.isNaN(undefined)) // false
+console.log(Number.isNaN(null)) // false
+```
+
+## 判断数组
+
+1. `Array.isArray`函数
+
+```javascript
+console.log(Array.isArray([])) // true
+console.log(Array.isArray({})) // false
+```
+
+2. `instanceof`操作符
+
+```javascript
+console.log([] instanceof Array) // true
+console.log({} instanceof Array) // false
+```
+
+3. `Object.prototype.toString.call()`
+
+```javascript
+console.log(Object.prototype.toString.call([])) // [object Array]
+console.log(Object.prototype.toString.call({})) // [object Object]
+```
+
+4. `Array.prototype.isPrototypeOf()`
+
+```javascript
+console.log(Array.prototype.isPrototypeOf([])) // false
+console.log(Array.prototype.isPrototypeOf({})) // false
+```
+
+5. `constructor`属性
+
+```javascript
+console.log([].constructor === Array) // true
+console.log({}.constructor === Array) // false
+```
+
+6. `__proto__`属性
+
+```javascript
+console.log([].__proto__ === Array.prototype) // true
+console.log({}.__proto__ === Array.prototype) // false
+```
