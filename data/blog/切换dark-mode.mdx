@@ -1,0 +1,127 @@
+---
+title: 'How to add dark mode to your React.js website with TailwindCSS'
+summary: 'This article will show you how to add dark mode to your React.js website with TailwindCSS without using <ThemeProvider>.'
+date: '2024-04-10'
+lastmod: '2024-06-10'
+tags: ['TailwindCSS', 'react']
+---
+
+Recently I built a typing speed test website with React.js and TailwindCSS. I wanted to add a dark mode feature to the site, but I didn't want to use the `<ThemeProvider>` component from styled-components. I wanted to use TailwindCSS classes to toggle between light and dark mode. After some research, I found a way to do this. In this article, I will show you how to do this.
+
+## Prepare Your TailwindCSS Config File
+
+- Make sure you've setup TailwindCSS in your project already(You can refer to this [link](https://tailwindcss.com/docs/installation)).
+- Then open `tailwind.config` file and add the this line ` darkMode: "class"`, the whole file may look like this:
+
+```js
+/** @type {import('tailwindcss').Config} */
+
+import colors from 'tailwindcss/colors'
+
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: colors.yellow,
+        error: colors.red,
+      },
+    },
+  },
+  darkMode: 'class', // enable dark mode based on the class
+  plugins: [],
+}
+```
+
+Tailwind includes a dark variant that lets you style your site differently when dark mode is enabled, for example, you can use `dark:bg-gray-800` to set the background color to gray-800 when dark mode is enabled.
+
+```html
+div class="bg-white dark:bg-slate-800 rounded-lg px-6 py-8 ring-1 ring-slate-900/5 shadow-xl">
+  <div>
+    <span class="inline-flex items-center justify-center p-2 bg-indigo-500 rounded-md shadow-lg">
+      <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><!-- ... --></svg>
+    </span>
+  </div>
+  <h3 class="text-slate-900 dark:text-white mt-5 text-base font-medium tracking-tight">Writes Upside-Down</h3>
+  <p class="text-slate-500 dark:text-slate-400 mt-2 text-sm">
+    The Zero Gravity Pen can be used to write in any orientation, including upside-down. It even works in outer space.
+  </p>
+</div>
+```
+
+## Create a `useDarkMode` custom Hook
+
+Create a new file called `useDarkMode.js` in your `src/hooks` folder and add the following code:
+
+```ts
+import { useEffect, useState } from 'react'
+
+const matchDark = '(prefers-color-scheme: dark)' // store the media query in a variable
+
+export default function useDarkMode() {
+  const [isDark, setIsDark] = useState(
+    () => window.matchMedia && window.matchMedia(matchDark).matches
+  ) // check if the user prefers dark mode
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(matchDark)
+
+    const handleChange = () => {
+      setIsDark(mediaQuery.matches) // update the state based on the media query
+    }
+
+    mediaQuery.addEventListener('change', handleChange) // listen for changes in the media query
+    return () => mediaQuery.removeEventListener('change', handleChange) // clean up the event listener
+  }, [setIsDark, isDark])
+
+  useEffect(() => {
+    if (isDark) {
+      // add or remove the dark class based on the state
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [isDark])
+
+  return { isDark, setIsDark }
+}
+```
+
+This hook encapsulates the logic for detecting and managing dark mode preference in a React application. Other components can use this hook to access and manipulate the dark mode state without duplicating the logic.
+
+## Use this `useDarkMode` custom Hook
+
+```tsx
+import { useRef } from 'react'
+import { MdDarkMode } from 'react-icons/md'
+import { MdOutlineLightMode } from 'react-icons/md'
+import useDarkMode from '../hooks/useDarkMode'
+
+function DarkModeToggle() {
+  const togglerRef = useRef<HTMLButtonElement>(null)
+  const { isDark, setIsDark } = useDarkMode() // get the dark mode state and setter function from the custom hook
+
+  const handleToggleDarkMode = () => {
+    togglerRef.current?.blur() // remove focus from the button after clicking
+    setIsDark(!isDark)
+  }
+  return (
+    <button
+      ref={togglerRef}
+      className="absolute right-10 top-10 text-slate-800 dark:text-slate-500"
+      onClick={() => {
+        handleToggleDarkMode() // when the button is clicked, toggle the dark mode state
+      }}
+    >
+      {isDark ? <MdDarkMode className="h-5 w-5" /> : <MdOutlineLightMode className="h-5 w-5" />}
+    </button>
+  )
+}
+
+export default DarkModeToggle
+```
+
+Now when you clicked the button the dark mode will be toggled. And all the dark:xx classes you write in your code will be applied when the dark mode is enabled.'
+
+## Conclusion
+
+Now you have successfully added dark mode to your React.js website with TailwindCSS without using `<ThemeProvider>`. You can now easily toggle between light and dark mode using the `useDarkMode` custom hook. I hope you found this article helpful.
