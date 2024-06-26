@@ -11,6 +11,14 @@ export default function Home({ posts }) {
     <>
       <div>欢迎来到我的博客小屋！上茶！</div>
 
+      <Link
+        href={'https://joy-peng-portfolio.vercel.app'}
+        target="_blank"
+        className=" animate-bounce text-gray-500 underline underline-offset-2 hover:text-gray-400 hover:no-underline"
+      >
+        Portfolio传送门
+      </Link>
+
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         <div className="space-y-2 pb-8 pt-6 md:space-y-5">
           <h1 className="text-2xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-2xl sm:leading-10 md:text-3xl md:leading-14">
