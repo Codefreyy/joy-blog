@@ -1,1 +1,9 @@
-{ "javascript": 4, "性能优化": 3, "算法": 2, "动态规划": 2, "tailwindcss": 1, "react": 1 }
+{
+  "非技术": 1,
+  "javascript": 4,
+  "性能优化": 3,
+  "算法": 2,
+  "动态规划": 2,
+  "tailwindcss": 1,
+  "react": 1
+}
