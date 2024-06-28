@@ -3,7 +3,7 @@ title: 'JavaScript数据类型及判断'
 
 date: '2024-06-17'
 
-lastmod: '2024-06-17'
+lastmod: '2024-06-28'
 
 tags: ['JavaScript']
 
@@ -25,6 +25,8 @@ name = 22
 ```
 
 可以修改变量的值为不同类型，允许这种操作的编程语言被称为“动态类型”(dynamiclly typed)。与之相对的`Java``C``C++`等语言是“静态类型”(statically typed)。
+
+**Contents**
 
 <TOCInline toc={props.toc} exclude="Introduction" />
 
@@ -345,11 +347,10 @@ for (let key in user) {
 
 ## 数据类型判断
 
-### 判断数据类型的方法
+### `typeof`操作符
 
-1. `typeof`操作符
-   `typeof`是一个一元操作符，放在其单个操作数之前，操作数可以是任意类型。`typeof`返回一个表示操作数类型的字符串。
-   `typeof`能判断所有的值类型和函数，但是无法对`null`, `object`和数组进行区分。
+`typeof`是一个一元操作符，放在其单个操作数之前，操作数可以是任意类型。`typeof`返回一个表示操作数类型的字符串。
+`typeof`能判断所有的值类型和函数，但是无法对`null`, `object`和数组进行区分。
 
 例如：
 
@@ -367,8 +368,9 @@ console.log(typeof {}) // object
 console.log(typeof []) // object
 ```
 
-2. `instanceof`操作符
-   `instanceof`能判断**对象**的具体类型，但是不能判断基本类型。**其内部运行机制是判断在其原型链中能否找到该类型的原型**。
+### `instanceof`操作符
+
+`instanceof`能判断**对象**的具体类型，但是不能判断基本类型。**其内部运行机制是判断在其原型链中能否找到该类型的原型**。
 
 ```javascript
 console.log([] instanceof Array) // true
@@ -381,8 +383,9 @@ let p = new Person()
 console.log(p instanceof Person) // true
 ```
 
-3. `Object.prototype.toString.call()`
-   所有的对象都有`internal properties`，例如`[[Class]]`，`[[Prototype]]`等。`[[class]]`用来描述对象的类型信息，
+### `Object.prototype.toString.call()`
+
+所有的对象都有`internal properties`，例如`[[Class]]`，`[[Prototype]]`等。`[[class]]`用来描述对象的类型信息，
 
 当我们调用 `Object.prototype.toString()`时，以下步骤会发生：
 
@@ -428,7 +431,7 @@ function f() {
 }
 ```
 
-## 判断NaN
+### 判断NaN
 
 1. `isNaN`函数
    `isNaN`函数用来判断一个值是否是`NaN`，它会先将参数转换为数字，然后再判断是否是`NaN`。
@@ -457,7 +460,7 @@ console.log(Number.isNaN(undefined)) // false
 console.log(Number.isNaN(null)) // false
 ```
 
-## 判断数组
+### 判断数组
 
 1. `Array.isArray`函数
 
@@ -500,3 +503,42 @@ console.log({}.constructor === Array) // false
 console.log([].__proto__ === Array.prototype) // true
 console.log({}.__proto__ === Array.prototype) // false
 ```
+
+## JavaScript里“空”的概念
+
+### undeclared vs undefined
+
+```javascript
+typeof notExist // undefined
+```
+
+当我们`typeof`一个未定义的变量时，返回`undefined`。这里的`undefined`到底是什么呢？
+为什么返回的不是`null`?
+
+> [!Tip] >`typeof`是唯一一个能够访问一个未声明变量而不抛出错误的方法，其他情况下就会抛出`ReferenceError`。
+>
+> ```javascript
+> const a = 1
+> console.log(a + c) // ReferenceError: c is not defined
+> ```
+
+1. undefined通常表示变量已声明但**未赋值**，或者根本没有声明。
+2. null是一个表示无值或空值的对象。它通常用于表示意图上的“空”或“无，是一个**故意赋值**的结果。
+
+在上面的例子中，`notExist`变量是一个未声明的状态(undeclared)，而不是声明了未赋值的状态(undefined)。
+
+从感觉上说，返回`undefined`是不合理的。但JavaScript就是这样设计的，如`你不知道的JavaScript`的作者`Kyle`所说：这是一个历史遗留问题，JavaScript试图假装声明的缺失并不是那么重要。
+
+> That's another historical wart, JavaScript trying to pretend as if the absence of declaration isn't that big deal, you can work around with it.
+> In retrospect, they should just return a string of undeclared
+
+### uninitialized vs undefined
+
+```javascript
+console.log(a) // undefined
+console.log(b) // ReferenceError: b is not defined
+let b
+var a
+```
+
+var声明的变量会在代码执行前进行变量提升，初始化为undefined。而let声明的变量在声明前处于未初始化（uninitialized）状态，尝试访问这些变量会导致ReferenceError。
