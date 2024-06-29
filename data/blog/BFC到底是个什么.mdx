@@ -1,0 +1,47 @@
+---
+title: 'BFC到底是个什么？'
+
+date: '2024-06-29'
+
+lastmod: '2024-06-29'
+
+tags: ['css']
+
+draft: true
+
+summary: ''
+---
+
+## Introduction
+
+前端面试题集锦中，CSS部分经常会问到关于BFC的理解。以我最近在看的一个面试题合集为例，它给的解释是：
+
+> BFC 即块级格式上下文，根据盒模型可知，每个元素都被定义为一个矩形盒子，然而盒子的布局会受到尺寸，定位，盒子的子元素或兄弟元素，视口的尺寸等因素决定，所以这里有一个浏览器计算的过程，计算的规则就是由一个叫做视觉格式化模型的东西所定义的，BFC 就是来自这个概念，它是 CSS 视觉渲染的一部分，用于决定块级盒的布局及浮动相互影响范围的一个区域。
+>
+> 作者：vortesnail
+> 链接：https://juejin.cn/post/7061588533214969892
+
+读完感觉听到了什么，又感觉没听懂。所以我决定写一篇文章来解释一下BFC到底是个什么。
+
+## 定义
+
+BFC的全称是Block Formatting Context，块级格式上下文。
+
+1. Formatting Context: 我们把它拆解开来，先看`Formatting Context`格式上下文，这个概念是`CSS2.1`中引入的，用来描述元素如何在文档中定位和相互作用，页面上所有内容都是格式上下文的
+   一部分。再通俗一点，格式上下文就是一块区域，这块区域里的元素按照一定的规则进行布局。
+
+2. Block：块级，我们在刚学css的时候都会学到，块级元素会在新的一行开始，自上而下垂直排列，比如`div`、`p`、`h1`等。
+
+合在一起看，Block Formatting Context（BFC）就是一个根据块布局规则布置子元素的区域。
+
+除此之外，格式上下文还有`flex formatting context`（flex格式上下文）、`grid formatting context`（grid格式上下文）等。
+
+## 块级格式上下文什么时候会生成
+
+1. `<html>元素`
+
+   根元素会自动创建一个BFC，即`<html>`元素。`<html>` 元素块内的每个元素都按照块和内联布局的规则按照正常流程进行布局。
+
+## 参考资料
+
+[1] https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_flow_layout/Introduction_to_formatting_contexts
