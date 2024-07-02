@@ -1,0 +1,145 @@
+---
+title: '有趣的-0和Object.is()'
+
+date: '2024-07-02'
+
+lastmod: '2024-07-02'
+
+tags: ['JavaScript']
+
+draft: false
+
+summary: ''
+---
+
+## Introduction
+
+提到负0，很多人会想负0不就是0吗？实际上，负0有它独特的用途。
+
+想象你在设计一个游戏，你需要一个变量来表示一个角色的移动方向，+号表示向右移动，-号表示向左移动，那么0就表示不移动。如果一个角色从右往左移在原点停下，此时它的朝向是左，但是它的速度是0，这时候就需要负0来表示这个状态。
+
+## 如何判断一个数是负0？
+
+不说废话来看代码，我们用一系列例子来看看它的特点：
+
+```javascript
+var trendRate = -0
+trendRate === -0 // true            // 负零等于负零，没问题
+trendRate.toString() // "0"         // 负零转换成字符串是"0"，看起来不太好
+trendRate === 0 // true             // 负零等于零，嗯...在上面游戏的那个例子里，不太对
+trendRate < 0 // false              // 看来-0既不小于0也不大于0
+trendRate > 0 // false              // 看来-0既不小于0也不大于0
+
+// ES6新增的方法Object.is()可以用来比较两个值是否相等, 它比===更严格，在===里 -0 === 0 为true
+// 但在Object.is()里 -0 === 0 为false
+Object.is(trendRate, -0) // true
+Object.is(trendRate, 0) // false
+```
+
+## 如何获得一个数的正负符号？
+
+ES6中新增了`Math.sign()`方法，可以用来判断一个数是正数、负数还是零，返回值有三种情况：
+
+```javascript
+Math.sign(0) // 0
+Math.sign(-0) // -0
+Math.sign(-1) // -1
+Math.sign(1) // 1
+Math.sign(2) // 1
+Math.sign(-3) // -1
+```
+
+但是它看起来有点搞笑，为什么`Math.sign(-0)`不返回`-1`呢？
+
+我们可以创造一个自己的`sign`来判断数字的正负：
+
+```javascript
+const sign = (v) => (v !== 0 ? Math.sign(v) : Object.is(v, -0) ? -1 : 1)
+sign(0) // 1
+sign(-0) // -1
+```
+
+这个`sign`函数的逻辑很简单，如果`v`不等于0，就返回`Math.sign(v)`的值，如果`v`等于-0，就返回-1，否则返回1。
+
+## 应用到开头说的那个场景
+
+```javascript
+function formatTrendSpeed(trendSpeed) {
+  const direction = trendRate < 0 || Object.is(trendRate, -0) ? '⬇️' : '⬆️'
+  return `${direction} ${Math.abs(trendRate)}`
+}
+```
+
+## 小测试
+
+我们试着来自己写一个`Object.is`函数，用作polyfill来支持不支持`Object.is`的浏览器：
+
+首先我们能先写个框架，如果`Object.is`不存在，就定义一个`Object.is`函数：
+
+````javascript
+if(!Object.is) {
+  Object.is = function(x, y) {
+
+  }
+}
+
+接着我们来填充这个函数的逻辑，可以分好几种情况：
+1. 如果这两个数里有一个数是-0，那么我们就要判断这两个数是否都是-0，只有这样才能相等。
+判断是否为-0的方法是`1/v === -Infinity`，因为`1/-0`是`-Infinity`，而`1/0`是`Infinity`，所以可以用这个方法来判断。
+
+```javascript
+  function isNegativeZero(v) {
+    return 1/v === -Infinity
+  }
+````
+
+2. 如果这两个数都是`NaN`，那么它们是相等的。
+
+```javascript
+if (isNaN(x) && isNaN(y)) {
+  return true
+}
+```
+
+3. 如果是其他数，那么我们就直接用`===`来判断。
+
+```javascript
+return x === y
+```
+
+最后我们把这些逻辑填充到`Object.is`函数里：
+
+```javascript
+if (!Object.is) {
+  Object.is = function (x, y) {
+    const xNegativeZero = isNegativeZero(x)
+    const yNegativeZero = isNegativeZero(y)
+
+    if (xNegativeZero || yNegativeZero) {
+      //如果有一个人是negative zero
+      return xNegativeZero && yNegativeZero //那就必须两个人都是negative zero才能返回true
+    }
+
+    if (isNaN(x) && isNaN(y)) {
+      return true
+    }
+
+    if (x === y) {
+      return true
+    }
+
+    function isNaN(v) {
+      return v !== v
+    }
+
+    function isNegativeZero(v) {
+      return x === 0 && 1 / v === -Infinity
+    }
+    return false
+  }
+}
+```
+
+大功告成！
+
+以上就是`-0`以及与之相关的`Math.sign`和`Object.is`的介绍，希望对你有所帮助！

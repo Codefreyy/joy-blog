@@ -43,9 +43,18 @@ let num2 = 22.5
 
 - Infinity: 表示无穷大，例如`1/0`。
 - -Infinity: 表示无穷小，例如`-1/0`。
-- NaN: 表示不是一个数字，例如`0/0`。
+- NaN: 表示它是一个**invalid number**, 虽然它invalid,但它扔是一个number。
   - NaN是粘性的，任何对NaN的操作都会返回NaN。
   - 如果我们在`JavaScript`中做了不合理的数学运算，例如`0/0`，`Infinity-Infinity`，`Math.sqrt(-1)`等，都会返回`NaN`。
+
+> [!Tip] > `NaN`是唯一一个不等于自己的值，即`NaN !== NaN`。
+> 所以要写一个函数判断一个东西是不是`NaN`，可以这样写，很有意思：
+>
+> ```javascript
+> function isNaN(value) {
+>   return value !== value
+> }
+> ```
 
 ## BigInt类型
 
