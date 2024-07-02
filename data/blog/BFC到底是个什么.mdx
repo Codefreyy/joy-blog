@@ -142,20 +142,20 @@ BFC的全称是Block Formatting Context，块级格式上下文。
 <div class="content"></div>
 ```
 
-````css
- ul li{
-        list-style:none;
-        width: 200px;
-        height: 100px;
-        background-color: #c58585;
-        float: left;
-    }
-    .content{
-        width: 100%;
-        height: 200px;
-        background-color: rgb(87, 179, 182);
-    }
-    ```
+```css
+ul li {
+  list-style: none;
+  width: 200px;
+  height: 100px;
+  background-color: #c58585;
+  float: left;
+}
+.content {
+  width: 100%;
+  height: 200px;
+  background-color: rgb(87, 179, 182);
+}
+```
 
 下面的蓝色content会和1，2，3重叠，因为`ul`的高度塌陷了，我们可以给`ul`添加`overflow:hidden`属性，让`ul`创建一个新的BFC，从而清除浮动。
 或者在`ul`后面添加一个空的`div`，给这个`div`添加一个clear类，这个类里面设置`clear:both`属性，也可以清除浮动。
@@ -165,12 +165,13 @@ BFC的全称是Block Formatting Context，块级格式上下文。
 想实现左侧固定，右侧自适应的两栏布局，有以下几种方法：
 
 1. 浮动
+
 ```html
 <div class="outer">
   <div class="left">左侧</div>
   <div class="right">右侧</div>
 </div>
-````
+```
 
 利用浮动，左边元素宽度固定 ，设置向左浮动。
 
@@ -239,5 +240,7 @@ BFC的全称是Block Formatting Context，块级格式上下文。
 ## 参考资料
 
 [1] https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_flow_layout/Introduction_to_formatting_contexts
+
 [2] https://www.w3.org/TR/CSS2/visuren.html#normal-flow
+
 [3] https://juejin.cn/post/7301201921204011049
