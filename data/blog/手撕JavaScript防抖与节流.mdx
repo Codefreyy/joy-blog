@@ -3,7 +3,7 @@ title: '手撕JavaScript防抖与节流'
 
 date: '2024-06-19'
 
-lastmod: '2024-06-19'
+lastmod: '2024-07-03'
 
 tags: ['JavaScript', '性能优化']
 
@@ -33,6 +33,8 @@ summary: '防抖与节流是前端开发中常用的性能优化手段，本文�
 
 ### 实现方式
 
+1. 方法1： 使用setTimeout（推荐）
+
 ```javascript
 function debounce(fn, delay) {
   let timer
@@ -47,6 +49,36 @@ function debounce(fn, delay) {
     timer = setTimeout(() => {
       fn.apply(context, args)
     }, delay)
+  }
+}
+```
+
+2. 方法2: 使用时间戳
+
+```javascript
+function debounce(fn, delay) {
+  let lastCall = 0 //初始化上次调用时间为0
+  let timer
+
+  return function () {
+    const now = Date.now() // 获取当前时间戳
+    const context = this
+    const args = arguments
+
+    clearTimeout(timer) // 每次调用都清除上次的定时器，即使定时器一开始为空
+
+    // 为了让每次第一次调用时延迟执行，符合防抖的定义
+    if (now - lastCall >= delay) {
+      lastCall = now
+      timer = setTimeout(() => {
+        fn.apply(context, args)
+      }, delay)
+    } else {
+      timer = setTimeout(() => {
+        lastCall = now
+        fn.apply(context, args)
+      }, delay)
+    }
   }
 }
 ```
@@ -182,6 +214,8 @@ app.addEventListener(
 
 ### 实现方式
 
+1. 使用isThrottle标志
+
 ```javascript
 function throttle(fn, interval) {
   let isThrottled = false
@@ -199,6 +233,23 @@ function throttle(fn, interval) {
 }
 ```
 
+2. 使用时间戳
+
+````javascript
+function throttle(fn, interval) {
+  let lastCall = 0
+  return function() {
+    let now = Date.now()
+    const context = this
+    const args = arguments
+
+    if(now - lastCall >= interval ) {
+      fn.apply(context, args)
+      lastCall = now
+    }
+  }
+}
+
 我们还是在上面的场景中使用节流函数：
 
 ```javascript
@@ -210,7 +261,7 @@ app.addEventListener(
     console.log('hello')
   }, 1000)
 )
-```
+````
 
 鼠标不停滑动，1秒内只打印一次`hello`，非常好。
 问题在于，当我们停下鼠标后，最后一次的`hello`不会打印，因为我们设置的是1秒内只执行一次。
