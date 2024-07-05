@@ -9,7 +9,7 @@ tags: ['JavaScript']
 
 draft: false
 
-summary: ''
+summary: 'Promise是JavaScript中处理异步编程的一种方式，本文将详细介绍Promise的基本特点、方法以及如何手写一个简易的Promise。'
 ---
 
 ## Promise是什么？
@@ -36,64 +36,9 @@ const fetchValue = fetch('/api/get-data')
 console.log(fetchValue)
 ```
 
-当我们调用`fetch`时，它会启动网络请求，这是一个一步操作，JavaScript线程不会停止并等待，代码继续运行。
+当我们调用`fetch`时，它会启动网络请求，这是一个异步操作，JavaScript线程不会停止并等待，代码继续运行。
 
 但是`fetch()`函数实际返回了什么？不可能是请求的结果，因为请求还没完成。实际上它返回一个`Promise`对象，你可以把它理解为一张借条，上面写着“我承诺会在未来的某个时间点给你一个结果”。
-
-### Promise如何避免回调地狱？
-
-什么是回调地狱？回调地狱是指多个回调函数嵌套调用，导致代码难以阅读和维护。例如：
-
-```javascript
-console.log(3)
-setTimeout(() => {
-  console.log(2)
-  setTimeout(() => {
-    console.log(1)
-    setTimeout(() => {
-      console.log('Happy New Year!')
-    }, 1000)
-  }, 1000)
-}, 1000)
-```
-
-上述代码实现了一个新年倒计时，这是一个典型的回调地狱。使用`Promise`可以很好地解决这个问题，代码变得更加清晰易读：
-
-```javascript
-const countdown = (time, message) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(message)
-      resolve()
-    }, time)
-  })
-}
-
-countdown(1000, 3)
-  .then(() => countdown(1000, 2))
-  .then(() => countdown(1000, 1))
-  .then(() => console.log('Happy New Year!'))
-```
-
-如果再使用`async`和`await`，代码会更加简洁：
-
-```javascript
-const countdown = (time, message) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(message)
-      resolve()
-    }, time)
-  })
-}
-
-const newYear = async () => {
-  await countdown(1000, 3)
-  await countdown(1000, 2)
-  await countdown(1000, 1)
-  console.log('Happy New Year!')
-}
-```
 
 ## Promise的基本特点
 
@@ -599,6 +544,63 @@ MyPromise.any([promise1, promise2]).then((value) => {
       })
     })
   }
+```
+
+## 使用promise如何避免回调地狱？
+
+### Promise如何避免回调地狱？
+
+什么是回调地狱？回调地狱是指多个回调函数嵌套调用，导致代码难以阅读和维护。例如：
+
+```javascript
+console.log(3)
+setTimeout(() => {
+  console.log(2)
+  setTimeout(() => {
+    console.log(1)
+    setTimeout(() => {
+      console.log('Happy New Year!')
+    }, 1000)
+  }, 1000)
+}, 1000)
+```
+
+上述代码实现了一个新年倒计时，这是一个典型的回调地狱。使用`Promise`可以很好地解决这个问题，代码变得更加清晰易读：
+
+```javascript
+const countdown = (time, message) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log(message)
+      resolve()
+    }, time)
+  })
+}
+
+countdown(1000, 3)
+  .then(() => countdown(1000, 2))
+  .then(() => countdown(1000, 1))
+  .then(() => console.log('Happy New Year!'))
+```
+
+如果再使用`async`和`await`，代码会更加简洁：
+
+```javascript
+const countdown = (time, message) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log(message)
+      resolve()
+    }, time)
+  })
+}
+
+const newYear = async () => {
+  await countdown(1000, 3)
+  await countdown(1000, 2)
+  await countdown(1000, 1)
+  console.log('Happy New Year!')
+}
 ```
 
 ## 参考资料
