@@ -1,4 +1,6 @@
 {
+  "authentication": 2,
+  "security": 2,
   "javascript": 6,
   "css": 1,
   "非技术": 2,

@@ -1,0 +1,80 @@
+---
+title: '走进OAuth 2.0'
+
+date: '2024-07-10'
+
+lastmod: '2024-07-10'
+
+tags: ['Authentication', 'Security']
+
+draft: false
+
+summary: ''
+---
+
+## What is OAuth?
+
+简单来说，`OAuth`是一种**_授权框架_**，允许第三方应用程序访问用户的资源，而无需用户提供他们的凭据。这是通过授权服务器颁发访问令牌（`access token`）来实现的。这个访问令牌代表了用户授权第三方应用程序访问他们的资源的许可。
+
+例如，在我的Breaddit项目中，用户可以选择使用谷歌账号登录，这时候Breaddit会请求用户授权，用户同意后，Breaddit会从谷歌授权服务器获取一个`token`，然后使用这个访问令牌来访问用户的谷歌资源，例如用户的邮箱地址、头像等。
+
+<Image alt="oAuth" src="/static/images/blog-07-2024/OAuth.png" width={500} height={500} />
+
+如上图，`OAuth`的工作流程如下：
+
+- 用户打开第三方应用程序，点击登录按钮。
+- 第三方应用程序将用户重定向到授权服务器。
+- 用户登录授权服务器，授权服务器验证用户身份。
+- 用户同意授权第三方应用程序访问他们的资源。
+- 授权服务器颁发**访问令牌**给第三方应用程序。
+- 第三方应用程序使用访问令牌访问用户的资源。
+- 用户可以随时撤销对第三方应用程序的访问权限。
+- 访问令牌过期后，第三方应用程序可以使用**刷新令牌**来获取新的访问令牌。
+- 用户可以随时撤销刷新令牌。
+
+## Access Token & Refresh Token
+
+- `Access token`是一个短期的令牌，通常在几分钟到几小时之间，用于访问资源服务器。如果第三方应用程序需要访问用户的资源，它必须使用这个访问令牌。如果访问令牌过期，第三方应用程序必须使用刷新令牌（`refresh token`）。
+- `Refresh token`是一个长期的令牌，通常在几天到几个月之间，用于获取新的访问令牌。如果访问令牌过期，第三方应用程序可以使用刷新令牌来获取新的访问令牌，而无需用户再次授权。
+
+我们之前介绍过`JWT`，`OAuth`中的`access token`和`refresh token`可以使用`JWT`来实现。
+在OAuth中结合JWT有多种好处：
+
+- Security: JWT是一个安全的方式来传递信息，因为它可以使用签名来验证数据的完整性。
+- Scalability: JWT是无状态的，可以在多个服务之间共享，这使得它非常适合分布式系统。
+- Effeciency: JWT是一个紧凑的格式，可以减少网络传输的数据量。
+- Flexibility: JWT可以存储任何信息，这使得它非常灵活。
+
+## Identity Provider vs Authorization Server
+
+在`OAuth`中，有两个重要的概念：`Identity Provider`和`Authorization Server`。
+
+- `Identity Provider`是一个**_认证_**服务，用于验证用户的身份。例如，谷歌、Facebook等。
+- `Authorization Server`是一个**_授权_**服务，用于颁发访问令牌。例如，Auth0、Okta等。
+
+在上面的例子中，谷歌既是`Identity Provider`，也是`Authorization Server`。但是在一些情况下，这两个服务可能是分开的，例如，用户可以使用谷歌账号登录，但是访问令牌是由Auth0颁发的。
+
+> Auth0是一个第三方的`Authorization Server`，它可以集成多个`Identity Provider`，例如谷歌、Facebook、Github等。
+
+## OAuth Flows
+
+`OAuth`有多种授权流程，每种流程适用于不同的场景。下面是一些常见的授权流程：
+
+- Authorization Code Flow
+- Implicit Flow
+- Resource Owner Password Credentials Flow
+- Client Credentials Flow
+
+## OAuth 2.0 vs OAuth 1.0
+
+和OAuth 1.0相比，OAuth 2.0有以下几个优点：
+
+- 简化了流程：OAuth 2.0的流程更简单，更容易实现。
+- 更安全：OAuth 2.0使用`HTTPS`来保护数据传输，提供了更好的安全性。
+- 更灵活：OAuth 2.0支持多种授权流程，可以根据不同的场景选择合适的流程。
+- OAuth 2.0支持使用JWT来实现访问令牌和刷新令牌。
+
+## References
+
+1. https://youtu.be/ZDuRmhLSLOY?si=qYzMIHK0NgjNVdV-
+2. https://auth0.com/docs/get-started/identity-fundamentals/authentication-and-authorization
