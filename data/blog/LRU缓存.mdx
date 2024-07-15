@@ -1,0 +1,366 @@
+---
+title: 'LRU缓存算法'
+
+date: '2024-07-15'
+
+lastmod: '2024-07-15'
+
+tags: ['算法']
+
+draft: false
+
+summary: ''
+---
+
+## Introduction
+
+`LRU`（Least Recently Used）是一种缓存算法，用于淘汰最近最少使用的数据。在实际应用中，我们经常会使用`LRU`算法来优化缓存性能。
+Leetcode第146题就是关于`LRU`缓存的题目，我们来看一下这个题目。
+
+设计和实现一个`LRU`（最近最少使用）缓存机制。它应该支持以下操作：获取数据`get`和写入数据`put`。
+
+- 获取数据`get(key)`：如果密钥（key）存在于缓存中，则获取密钥的值（总是正数），否则返回-1。
+- 写入数据`put(key, value)`：如果密钥不存在，则写入其数据值。当缓存达到其容量时，它应该在写入新数据之前使最近最少使用的数据无效。
+
+缓存以一个正整数作为容量`capacity`初始化，**_请确保你的缓存机制在O(1)时间复杂度内完成这两种操作_**。
+
+例如：
+
+```javascript
+ LRUCache cache = new LRUCache( 2 /* 缓存容量 */ );
+    cache.put(1, 1);
+    cache.put(2, 2);
+    cache.get(1);       // 返回  1
+    cache.put(3, 3);    // 该操作会使得密钥 2 作废
+    cache.get(2);       // 返回 -1 (未找到)
+    cache.put(4, 4);    // 该操作会使得密钥 1 作废
+    cache.get(1);       // 返回 -1 (未找到)
+    cache.get(3);       // 返回  3
+    cache.get(4);       // 返回  4
+```
+
+## 思考
+
+要解决这个问题，我们需要找到一个合适的数据结构来实现`LRU`缓存。使用`HashMap`+`双向链表`是一个不错的选择。让我们一个个来看：
+
+### HashMap
+
+首先考虑的是使用`HashMap`来存储`key`和`value`，这样我们可以在`O(1)`时间内获取数据。什么是`HashMap`，请看下图：
+
+<Image
+  alt="prototypeVisual"
+  src="/static/images/blog-07-2024/hashmap.png"
+  width={400}
+  height={300}
+/>
+
+假设我们想存储一些人的信息，'Paul': 29，'Jane':35等，使用`HashMap`，key可以是任何类型，value也可以是任何类型。哈希函数会先将`key`转换成一个`index`，然后将`value`存储在这个`index`位置。
+
+在上图例子中，这个将key转为index的过程，是把key的ASCII码减去'a'的ASCII码，如果超出了数组的范围，就取余数。
+于是，'Paul'的index是7，'Jane'的index是2，以此类推。
+
+在这个过程中，如果两个key的index相同，就会发生`hash collision`。但是在一些情况下，这两个服务可能是分开的，例如，用户可以使用谷歌账号登录，但是访问令牌是由Auth0颁发的。
+
+### 哈希冲突
+
+`哈希冲突`是指两个不同的`key`经过哈希函数计算后得到的`index`相同的情况。这种情况下，我们需要解决冲突，常见的解决冲突的方法有`chaining`和`open addressing`。
+
+1. chaining 链地址法
+
+chaining也就是使用链表来解决冲突。当两个key的index相同时，我们将这两个key存储在同一个链表中。如下图：
+
+<Image
+  alt="prototypeVisual"
+  src="/static/images/blog-07-2024/hashmap1.png"
+  width={500}
+  height={300}
+/>
+
+一个数组的结构，每个索引位置存储一个链表，这意味着`Jane`和`Paul`的信息都存储在索引为2的链表中。
+
+对于这种方式，插入的时间复杂度是`O(1)`，因为我们只需要找到链表的头部，然后插入到链表的头部。但是查找的时间复杂度是`O(n)`，因为我们需要遍历整个链表来查找`key`。
+
+2. open addressing 开放寻址
+
+开放寻址法简单来说就是当发生哈希冲突时，我们会在哈希表中寻找下一个空的位置来存储数据。
+它的插入和查找的时间复杂度都是`O(1)`。
+
+> [!Tip]
+> 双散列法是开放寻址法的一种，如果发生哈希冲突，我们会使用第二个哈希函数来计算下一个空的位置。例如：
+>
+> ```javascript
+>    h1(key) = key % 7 // 哈希函数1
+>    h2(key) = 5 - (key % 5) // 哈希函数2
+> ```
+
+这样做的好处是可以避免`primary clustering`（很多key都聚集在一个位置），这样会提高查找的效率。
+
+### 双向链表
+
+双向链表是一种链表，每个节点有两个指针，一个指向前一个节点，一个指向后一个节点。如下图：
+
+<Image
+  alt="prototypeVisual"
+  src="/static/images/blog-07-2024/linked-list.png"
+  width={500}
+  height={300}
+/>
+
+双向链表的优点是可以在`O(1)`时间内删除节点，因为我们可以直接找到要删除的节点，然后修改前一个节点和后一个节点的指针。而单向链表需要`O(n)`时间，因为我们需要找到要删除的节点，并且还需要找到前一个节点，然后修改前一个节点的指针。
+
+### HashMap + 双向链表
+
+综合来说，为了实现`LRU`缓存，我们可以使用`HashMap`来存储`key`和`value`，使用双向链表来存储`key`的顺序。当我们访问一个`key`时，我们将这个`key`移到链表的头部，这样最近访问的`key`就在链表的头部，最近最少访问的`key`就在链表的尾部。如下图：
+
+<Image alt="prototypeVisual" src="/static/images/blog-07-2024/LRU.png" width={500} height={400} />
+
+这样，我们就可以在`O(1)`时间内完成`get`和`put`操作。
+
+## 解题
+
+有了上述的思考，我们可以来用编码实现这个`LRU`缓存算法。
+
+1. 首先我们需要定义一个`Node`类，用来存储`key`和`value`，以及前一个节点和后一个节点。这是双向链表的节点。
+
+```javascript
+class Node {
+  constructor(key, value) {
+    this.key = key
+    this.value = value
+    this.prev = null
+    this.next = null
+  }
+}
+```
+
+2. 然后我们需要定义一个`LRUCache`类，用来实现`get`和`put`操作。
+
+```javascript
+class LRUCache {
+  constructor(capacity) {
+    this.capacity = capacity
+    this.hash = {}
+    this.count = 0 // cache size
+    this.dummyHead = new Node()
+    this.dummyTail = new Node()
+    this.dummyHead.next = this.dummyTail
+    this.dummyTail.prev = this.dummyHead
+  }
+}
+```
+
+3. `get`操作
+   获取数据时，我们首先检查`key`是否存在于`hash`中，如果存在，我们将这个`key`对应的节点移到链表的头部，然后返回`value`。如果不存在，我们返回`-1`。
+
+```javascript
+get(key) {
+    if (this.hash[key]) {
+        const node = this.hash[key]
+        this.moveToHead(node)
+        return node.value
+    } else {
+        return -1
+    }
+}
+```
+
+4. `moveToHead`方法
+
+```javascript
+moveToHead(node) {
+    this.removeNode(node) // 从当前位置删除节点
+    this.addToHead(node) // 添加到头部
+}
+
+removeNode(node) {
+    node.prev.next = node.next // 节点的前一个节点的next指向节点的下一个节点
+    node.next.prev = node.prev // 节点的下一个节点的prev指向节点的前一个节点
+}
+
+addToHead(node) {
+    node.prev = this.dummyHead // 节点的前一个节点指向dummyHead
+    node.next = this.dummyHead.next // 节点的下一个节点指向dummyHead的下一个节点
+    this.dummyHead.next.prev = node // dummyHead的下一个节点的前一个节点指向node
+    this.dummyHead.next = node // dummyHead的下一个节点指向node
+}
+```
+
+5. `put`操作
+   写入新数据时，我们首先检查`key`是否存在于`hash`中，如果存在，我们更新`value`，然后将这个`key`对应的节点移到链表的头部。如果不存在，我们创建一个新的节点，然后将这个`key`对应的节点移到链表的头部。如果缓存达到容量，我们删除链表尾部的节点。
+
+```javascript
+put(key, value) {
+    let node = this.hash[key]
+    if(node == null) {
+        let newNode = new Node(key, value)
+        this.hash[key] = newNode
+        this.addToHead(newNode)
+        this.count++
+        if(this.count > this.capacity) {
+            this.removeTail()
+        }
+    } else {
+        node.value = value
+        this.moveToHead(node)
+    }
+}
+
+removeTail() {
+    let tail = this.dummyTail.prev
+    this.removeNode(tail)
+    delete this.hash[tail.key]
+    this.count--
+}
+```
+
+6. 整体代码
+
+```javascript
+class ListNode {
+  constructor(key, value) {
+    this.key = key
+    this.value = value
+    this.next = null
+    this.prev = null
+  }
+}
+
+class LRUCache {
+  constructor(capacity) {
+    this.capacity = capacity
+    this.hash = {}
+    this.count = 0
+    this.dummyHead = new ListNode()
+    this.dummyTail = new ListNode()
+    this.dummyHead.next = this.dummyTail
+    this.dummyTail.prev = this.dummyHead
+  }
+
+  get(key) {
+    let node = this.hash[key]
+    if (node == null) return -1
+    this.moveToHead(node)
+    return node.value
+  }
+
+  put(key, value) {
+    let node = this.hash[key]
+    if (node == null) {
+      if (this.count == this.capacity) {
+        this.removeLRUItem()
+      }
+      let newNode = new ListNode(key, value)
+      this.hash[key] = newNode
+      this.addToHead(newNode)
+      this.count++
+    } else {
+      node.value = value
+      this.moveToHead(node)
+    }
+  }
+
+  moveToHead(node) {
+    this.removeFromList(node)
+    this.addToHead(node)
+  }
+
+  removeFromList(node) {
+    let temp1 = node.prev
+    let temp2 = node.next
+    temp1.next = temp2
+    temp2.prev = temp1
+  }
+
+  addToHead(node) {
+    node.prev = this.dummyHead
+    node.next = this.dummyHead.next
+    this.dummyHead.next.prev = node
+    this.dummyHead.next = node
+  }
+
+  removeLRUItem() {
+    let tail = this.popTail()
+    delete this.hash[tail.key]
+    this.count--
+  }
+
+  popTail() {
+    let tail = this.dummyTail.prev
+    this.removeFromList(tail)
+    return tail
+  }
+}
+```
+
+又或者使用原型链的方式来实现：
+
+```javascript
+class Node {
+  constructor(key, value) {
+    this.key = key
+    this.value = value
+    this.prev = null
+    this.next = null
+  }
+}
+
+var LRUCache = function (capacity) {
+  this.capacity = capacity
+  this.hash = {}
+  this.count = 0
+  this.dummyHead = new Node()
+  this.dummyTail = new Node()
+  this.dummyHead.next = this.dummyTail
+  this.dummyTail.prev = this.dummyHead
+}
+
+LRUCache.prototype.get = function (key) {
+  if (this.hash[key]) {
+    const node = this.hash[key]
+    this.moveToHead(node)
+    return node.value
+  } else {
+    return -1
+  }
+}
+
+LRUCache.prototype.put = function (key, value) {
+  let node = this.hash[key]
+  if (node == null) {
+    let newNode = new Node(key, value)
+    this.hash[key] = newNode
+    this.addToHead(newNode)
+    this.count++
+    if (this.count > this.capacity) {
+      this.removeTail()
+    }
+  } else {
+    node.value = value
+    this.moveToHead(node)
+  }
+}
+
+LRUCache.prototype.moveToHead = function (node) {
+  this.removeNode(node)
+  this.addToHead(node)
+}
+
+LRUCache.prototype.removeNode = function (node) {
+  node.prev.next = node.next
+  node.next.prev = node.prev
+}
+
+LRUCache.prototype.addToHead = function (node) {
+  node.prev = this.dummyHead
+  node.next = this.dummyHead.next
+  this.dummyHead.next.prev = node
+  this.dummyHead.next = node
+}
+
+LRUCache.prototype.removeTail = function () {
+  let tail = this.dummyTail.prev
+  this.removeNode(tail)
+  delete this.hash[tail.key]
+  this.count--
+}
+```
