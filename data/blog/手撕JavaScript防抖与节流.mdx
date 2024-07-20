@@ -154,17 +154,14 @@ function enhance_debounce(func, wait, immediate) {
 
     if (immediate) {
       //如果设置了immediate为true，立即执行
-      var callNow = !timer
-      if (callNow) func.apply(context, args) // 在wait时间内，第一次触发时，立即执行
-      // 每次触发事件时，清除之前的计时器
+      let callNow = !timer
       clearTimeout(timer)
-
-      // 并且重新计时
       timer = setTimeout(function () {
         func.apply(context, args) // 时间到之后，执行函数
         timer = null // 清除计时器的引用
         // clearTimeout(timer) 必须使用timer = null来清除引用，而不能使用clearTimeout(timer)，否则会导致timer一直有值，无法再次进入if (callNow)的判断
       }, wait)
+      if (callNow) func.apply(context, args) // 在wait时间内，第一次触发时，立即执行
     } else {
       // 普通的防抖
       clearTimeout(timer)
