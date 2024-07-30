@@ -1,12 +1,13 @@
 {
-  "algorithm": 1,
+  "算法": 3,
   "authentication": 2,
   "security": 2,
   "javascript": 6,
+  "浏览器工作原理": 1,
+  "操作系统": 1,
   "css": 1,
   "非技术": 2,
   "性能优化": 3,
-  "算法": 2,
   "动态规划": 2,
   "tailwindcss": 1,
   "react": 1

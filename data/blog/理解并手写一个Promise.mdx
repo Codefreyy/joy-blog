@@ -234,8 +234,7 @@ fetch('/api/get-data')
   then(onFulfilled, onRejected) {
     // 无论如何，then方法都会返回一个新的Promise
     return new MyPromise((resolve, reject) => {
-      // 往onFulfilledCbs和onRejectedCbs中数组添加回调函数
-      this.onFulfilledCbs.push((value) => {
+     const fulfilledCb = (value) => {
         try {
           const result = onFulfilled ? onFulfilled(value) : value // 如果onFulfilled存在，执行onFulfilled，否则直接返回value
           if (result instanceof MyPromise) {
@@ -248,9 +247,9 @@ fetch('/api/get-data')
         } catch (error) {
           reject(error)
         }
-      })
+      }
 
-      this.onRejectedCbs.push((error) => {
+      const rejectedCb = (error) => {
         try {
           const result = onRejected ? onRejected(error) : error // 如果没有传入onRejected，直接返回error
           if (result instanceof MyPromise) {
@@ -261,9 +260,19 @@ fetch('/api/get-data')
         } catch (error) {
           reject(error)
         }
-      })
+      }
 
-      this.runAllCallbacks() //执行回调函数，其中会判断状态以实现相应的回调函数们
+      if(this.status == STATE.PENDING) {
+        this.onFulfilledCbs.push(fulfilledCb)
+        this.onRejectedCbs.push(rejectedCb)
+      }
+      if(this.status == STATE.FULFILLED) {
+        queueMicrotask(()=> fulfilledCb(this.value))
+      }
+      if (this.status == STATE.REJECTED) {
+        queueMicrotask(()=> rejectedCb(this.value))
+      }
+
     })
   }
 ```
