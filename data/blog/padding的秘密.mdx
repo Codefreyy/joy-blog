@@ -1,0 +1,58 @@
+---
+title: 'padding的秘密'
+
+date: '2024-09-05'
+
+lastmod: '2024-09-05'
+
+tags: ['css']
+
+draft: false
+
+summary: '这篇文章介绍了CSS中padding-top:100%的秘密，以及它的应用场景。''
+---
+
+今天面试的时候被问到了一个问题：`padding-top:100%`做了什么？确实之前没有深入了解过这个问题，所以回来查了一下资料，发现这个问题还是挺有意思的。
+
+首先来看这样一个例子：
+
+    ```html
+    <style>
+        .parent {
+      width: 30%;
+      border: 1px dotted red;
+    }
+
+    .child {
+      padding-top: 100%;
+      border: 1px solid black;
+    }
+
+
+    </style>
+     <div class="parent">
+      <div class="child"></div>
+    </div>
+
+```
+
+最后的结果是:
+
+<Image alt="oAuth" src="/static/images/blog-09-2024/padding.png" width={300} height={300} />
+
+
+一个完美的正方形!!!!!? 这看起来很奇怪，我们没有给任何div分配高度。
+
+要解答这个问题，首先要知道`padding-top`或 `padding-bottom`的值为百分比时，"the percentage refer to the width of the containing block"，百分比是相对于包含块的宽度计算的，什么又是
+包含块呢？“containing block is the content area of an element's nearest block-level ancestor”，也就是说包含块是元素最近的块级祖先的内容区域。
+
+### 详细解答
+
+1. 首先，我们给`.parent`设置了一个宽度为`30%`，这个宽度是相对于`.parent`的父元素的宽度计算的。由于`.parent`的父元素是`body`，所以`.parent`的宽度是`body`的宽度的30%。
+2. 然后，我们给`.child`设置了`padding-top:100%`，这个100%是相对于`.child`的包含块（也就是`.parent`）的宽度计算的，所以`.child`的`padding-top`是`.parent`的宽度的100%。
+3. 这样.child的宽高就是1:1的比例。
+
+
+### 应用场景
+使用这种 CSS 技巧，不需要通过 JavaScript 动态计算和设置高度。只要设置适当的 padding 值，CSS 会自动调整元素的高度，保持所需的纵横比。这种方法简洁且不容易出错，因为它完全依赖于 CSS 的布局机制，而不是需要额外的脚本来处理布局。
+```
