@@ -281,20 +281,20 @@ input.addEventListener(
 
 ### 加强版节流
 
-加强版的节流加入了 `debounce`的兜底功能，保证最后一次的执行。
+加强版的节流加入了 `debounce`的兜底功能，既能避免函数频繁调用，又能确保在用户停止操作后执行一次函数。
 
 ```javascript
 function enhanced_throttle(func, wait) {
   let lastTime = 0
-  let timer // debounce的推迟执行效果
+  let timer = null
 
   return function () {
     const context = this
     const args = arguments
-    let now = new Date()
+    let now = Date.now()
 
     if (now - lastTime < wait) {
-      clearTimeout(timer)
+      clearTimeout(timer) // debounce的推迟执行效果
       timer = setTimeout(() => {
         lastTime = now
         func.apply(context, args)

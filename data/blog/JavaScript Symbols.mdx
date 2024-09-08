@@ -1,0 +1,116 @@
+---
+title: 'JavaScript Symbols! But why?'
+
+date: '2024-09-08'
+
+lastmod: '2024-09-08'
+
+tags: ['JavaScript']
+
+draft: false
+
+summary: 'ES6引入了新的基本数据类型：Symbol，大多数前端都知道Symbol能创建一个独一无二的值，但是为什么我们需要这个呢？以及Symbol还有哪些我们可能不知道的事情。这篇文章我会从头到尾梳理一下。'
+---
+
+### Introduction
+
+ES6引入了新的基本数据类型：Symbol，大多数前端都知道Symbol能创建一个独一无二的值，但是为什么我们需要这个呢？以及Symbol还有哪些我们可能不知道的事情。这篇文章我会从头到尾梳理一下。
+
+首先，JavaScript有8种数据类型：string, boolean, number, null, undefined,bigint, symbol和object。其中除了object是引用数据类型，其他都是基本数据类型。
+
+除了NaN，所有基本数据类型都会跟值相等的基本数据类型完全相等，有点绕，我们看例子：
+
+```javascript
+NaN === NaN // false
+1 === 1 // true
+'joy' === 'joy' // true
+false === false // true
+null === null // true
+```
+
+但是对于引用数据类型来说，并不是这样
+
+```javascript
+const obj1 = { name: 'Intrinsic' }
+const obj2 = { name: 'Intrinsic' }
+console.log(obj1 === obj2) // false// Though, their .name properties ARE primitives:
+console.log(obj1.name === obj2.name) // true，因为"Intrinsic"是基本数据类型
+```
+
+在symbol出现之前，对象的键只能是字符串，如果尝试使用非字符串值作为对象的键，该值将被强制转换为字符串。比如下面：
+
+```javascript
+const obj = {}
+obj.foo = 'foo'
+obj['bar'] = 'bar'
+obj[2] = 2
+obj[{}] = 'someobj'
+console.log(obj)
+// { '2': 2, foo: 'foo', bar: 'bar', '[object Object]': 'someobj' }
+```
+
+> [!Tip]
+> 虽然有点跑题，但创建 Map 数据结构的部分原因是为了在键不是字符串的情况下允许键/值存储。
+
+### 什么是Symbol
+
+现在我们有了Symbol，一个无法重新被创建的，一个独一无二的基本数据类型。它既项对象一样，创建多个实例，但互相不完全相等。它又是一个基本数据类型，无法被更改。
+
+```javascript
+const s1 = Symbol('debug')
+const str = 'debug'
+const s2 = Symbol('xxyy')
+console.log(s1 === str) // false
+console.log(s1 === s2) // false
+console.log(s1) // Symbol(debug)
+```
+
+在创建symbol的时候可以选择性地传入一个参数，这个参数用于调试代码，否则它不会真正影响symbol本身。
+
+### 可以作为对象属性的symbol
+
+Symbol的一个重要用途是可以作为对象中的键，
+
+```javascript
+const obj = {};
+const sym = Symbol();
+obj[sym] = 'foo';
+obj.bar = 'bar';
+console.log(obj); // { bar: 'bar' }
+console.log(sym in obj); // true
+console.log(obj[sym]); // foo
+console.log(Object.keys(obj)); // ['bar']
+可以看到我们用symbol给obj加了一个属性，但是打印的时候看不到，用in关键字检查返回的又是true。
+```
+
+> [!Tip]
+> 用Object.keys获取所有keys也没有返回它，这是为了**_向后兼容_**，旧的代码并不知道Symbol这个对象。我们可以用Reflect.ownKeys()获取到包括字符串和符号在内的所有键的列表。
+
+所以我们其实是用Symbol在对象上创建私有属性！JavaScript一直以来都比其他语言缺少这个。
+
+标题：防止属性名称冲突
+只是创建私有属性吗？Symbol独一无二的特点还有另一个好处。当不同的库希望向对象添加属性而没有名称冲突的风险时，它们非常有用。
+
+如果两个不同的库想要将某种元数据附加到对象。他们都想在对象上设置某种标识符。如果简单地使用两个字符串的 id 作为键，则存在多个库使用同一键的巨大风险。
+
+```javascript
+function lib1tag(obj) {
+  obj.id = 42
+}
+function lib2tag(obj) {
+  obj.id = 369
+}
+```
+
+但使用Symbol就没有这个问题:
+
+```javascript
+const library1property = Symbol('lib1')
+function lib1tag(obj) {
+  obj[library1property] = 42
+}
+const library2property = Symbol('lib2')
+function lib2tag(obj) {
+  obj[library2property] = 369
+}
+```
