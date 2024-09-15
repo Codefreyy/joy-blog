@@ -1,0 +1,86 @@
+---
+title: '事件循环中宏任务的优先级及任务调度'
+
+date: '2024-09-16'
+
+lastmod: '2024-09-16'
+
+tags: ['浏览器', 'V8']
+
+draft: false
+
+summary: ''
+---
+
+## Introduction
+
+我们在提到事件循环时，总是提到有一个宏任务队列，一个微任务队列。实际上，在`WHATWG HTML Living Standard`中，事件循环的概念是这样定义的：
+
+> An event loop has one or more task queues. A task queue is a set of tasks. Task queues are sets, not queues, because the event loop processing model grabs the first runnable task from the chosen queue, instead of dequeuing the first task.
+>
+> 一个事件循环有一个多个任务队列，一个任务队列是一系列的任务。
+> 任务队列们是集合，而不是队列，因为事件循环处理模型从所选队列中抓取第一个可运行的任务，而不是出队第一个任务。
+
+对于每个任务，都具有`Steps`, `Source`和`Document`等属性，其中`Source`属性表示任务的来源，用于区分逻辑上不同类型的任务。
+
+{/* <TOCInline toc={props.toc} exclude="Introduction" /> */}
+
+## 宏任务的来源
+
+根据`WHATWG HTML Living Standard`中的定义，宏任务的来源主要有以下5种：
+
+- The DOM manipulation task Source
+- The user interaction task Source
+- The networking task Source
+- The navigation and traversal task Source
+- The rendering task Source
+
+<Image
+  alt="event-look"
+  src="/static/images/blog-09-2024/eventLoop_task.png"
+  width={400}
+  height={500}
+/>
+
+不同的任务源的宏任务会被放到不同的队列，如上图，在`Callback Queue`部分有不同类型的队列集合，`DOM Queue`, `NetworkQueue`, `TimerQueue`...
+
+## **宏任务的优先级？**
+
+HTML标准虽然定义了任务源，但没有定义任务源的优先级，优先级由各个浏览器厂商自己决定。但比较一致的是，在大多浏览器中，`user interaction`相关的宏任务拥有最高的优先级，`timer`相关的宏任务优先级则较低。
+
+在24年8月22号W3C发布的`Prioritized Task Scheduling API`优先级任务调度API中正式提出了调度任务的三个优先级：
+
+```typescript
+enum TaskPriority {
+  'user-blocking',
+  'user-visible',
+  'background',
+}
+```
+
+1. user-blocking
+
+user-blocking是最高优先级的，它的目的是应尽快运行的任务，这样以较低优先级运行它们会降低性能 用户体验。这可能是直接响应用户输入的（分块）工作，或者 例如，更新视口中的 UI 状态。
+
+> [!Tip]
+> 请注意，用这种优先级调度的任务通常在事件循环中具有比其他任务更高的优先级，但它们不一定会阻塞渲染。需要立即且不被打断的工作通常应该同步完成——但如果该工作耗时过长，这可能会导致响应变差。另一方面，“用户阻塞”任务可以用于将工作拆分，同时保持对输入和渲染的响应能力，并提高工作尽快完成的可能性。
+
+2. user-visible
+
+user-visible是第二高优先级，它适用于具有用户可观察到的有用副作用的任务，但这些副作用要么不能立即观察到，要么对用户体验来说不是必需的。具有此优先级的任务不如“ user-blocking ”任务重要或紧急。这是默认优先级。
+
+3. background
+
+background优先级最低，它适用于时间要求不高的任务，例如后台日志或指标处理或初始化某些第三方库。
+
+## 防饥渴机制
+
+至少在 Chrome 浏览器中，每个任务队列都有 “饥饿 ”保护功能，通过让优先级较低的队列在一段时间后（不确定有多长时间）也执行一些任务，防止队列用自己的任务淹没事件循环。
+
+## 参考资料
+
+1. https://wicg.github.io/scheduling-apis/
+2. https://html.spec.whatwg.org/multipage/webappapis.html#event-loops
+3. https://stackoverflow.com/questions/70900239/is-there-really-a-prioritization-system-for-the-task-queues/70913524#70913524
+4. https://source.chromium.org/chromium/chromium/src/+/main:base/task/sequence_manager/task_queue.h;drc=c846d80d34365688204d0bce112ea9145de107e3;l=101
+5. https://juejin.cn/post/7202211586676064315
