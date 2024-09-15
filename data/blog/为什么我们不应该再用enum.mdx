@@ -1,0 +1,210 @@
+---
+title: '为什么我们也许不应该再用enum?'
+
+date: '2024-09-15'
+
+lastmod: '2024-09-15'
+
+tags: ['TypeScript']
+
+draft: false
+
+summary: 'Enum是TypeScript中的一种数据类型，但是它有一些缺点，本文将详细介绍enum的优缺点以及替代方案。'
+---
+
+## Introduction
+
+我们知道Enum从来不是一个JavaScript的东西，它是TypeScript中用于定义命名常量的数据类型，但在许多开源项目中
+我们却不常见到Enum的身影，Enum究竟有什么缺点呢？让我们一起来看看。
+
+## Enum怎么用？
+
+以数字枚举为例，只需要使用`enum`关键字即可定义一个枚举类型：
+
+```typescript
+enum Direction {
+  Up,
+  Down,
+  Left,
+  Right,
+}
+```
+
+如果我们试着访问`Direction.Up`，它会返回0，访问`Direction[0]`，它会返回"Up"。
+
+也就是其背后像是这样一个对象
+
+```javascript
+{
+  Up: 0,
+  Down: 1,
+  Left: 2,
+  Right: 3,
+  0: "Up",
+  1: "Down",
+  2: "Left",
+  3: "Right"
+}
+```
+
+我们通过TypeScript官方提供的playground可以看到编译后的JavaScript代码：
+
+```javascript
+'use strict'
+var Direction
+;(function (Direction) {
+  Direction[(Direction['Up'] = 0)] = 'Up'
+  Direction[(Direction['Down'] = 1)] = 'Down'
+  Direction[(Direction['Left'] = 2)] = 'Left'
+  Direction[(Direction['Right'] = 3)] = 'Right'
+})(Direction || (Direction = {}))
+```
+
+## 仔细看enum编译后的代码
+
+1. `"use strict";`
+
+是一种严格模式的声明，它限制了一些不安全的操作，无法意外地创建全局变量，无法删除不可删除的属性，也不能使用一些不安全的语法。
+
+TypeScript 编译器默认会输出符合 ES5 及以上版本的 JavaScript 代码，严格模式是 ES5 标准的一部分。使用 "use strict"; 有助于确保生成的 JavaScript 代码在运行时更健壮，符合现代 JavaScript 的最佳实践。
+
+2. `var Direction`
+
+声明一个变量 Direction，用于后续存储枚举内容。
+
+3. IIFE，立即执行函数表达式
+
+```javascript
+Direction[(Direction['Up'] = 1)] = 'Up'
+```
+
+为枚举 Direction 添加一个值 Up，它的数值为 1，并且使 1 和 Up 之间可以互相映射。这种双向映射，既可以通过名称 (Up) 获取对应的值 1，也可以通过数值 1 找回名称 Up。这行代码将 Direction.Up 设置为 1，同时也将 Direction[1] 设置为 Up，实现了双向映射。
+
+## Enum的坑
+
+这样的使用给我们带来了一些坑，比如：
+
+```typescript
+enum Direction {
+  Up,
+  Down,
+  Left,
+  Right,
+}
+
+if (Direction.Up) {
+  console.log('Up')
+}
+```
+
+这里的`console.log('Up')`永远不会被执行，因为`Direction.Up`的值是0，而0在JavaScript中被认为是`false`。
+
+再看另一个例子：
+
+```typescript
+const enum LogLevel {
+  DEBUG,
+  INFO,
+  WARN,
+  ERROR,
+}
+
+function log(key: string, message: string, level: LogLevel) {
+  console.log(`[${level}] ${key}: ${message}`)
+}
+
+log('app', 'hello', LogLevel.DEBUG)
+```
+
+我们不能直接写`DEBUG`，而要写`LogLevel.DEBUG`。否则会出现报错如下：
+
+```
+Argument of type '"DEBUG"' is not assignable to parameter of type 'LogLevel'.
+```
+
+这非常地反直觉，我们希望直接使用`DEBUG`，而不是`LogLevel.DEBUG`。
+
+## 替代方案
+
+在TypeScript文档中，它甚至明确提到我们可能并不需要enum，而是使用常量对象。
+
+> In modern TypeScript, you may not need an enum when an object with as const could suffice
+
+```typescript
+const LogLevels = ['DEBUG', 'INFO', 'WARN', 'ERROR'] as const
+
+type LogLevel = (typeof LogLevels)[number] // 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'
+
+function log(key: string, message: string, level: LogLevel) {
+  console.log(`[${level}] ${key}: ${message}`)
+}
+log('app', 'hello', 'DEBUG')
+```
+
+通过使用常量对象，我们可以避免enum的一些坑，比如我们可以直接使用`DEBUG`而不是`LogLevel.DEBUG`。
+
+除此之外，如果使用常量对象，我们还可以直接使用`map`、`filter`等数组方法，这在enum中是不支持的，需要用`Object.values()`获取其值。
+
+1. 使用常量对象
+
+```typescript
+const UserRoles = [
+  'ADMIN',
+  'USER',
+  'GUEST'
+] as const
+
+type UserRole = typeof UserRoles[number] // 'ADMIN' | 'USER' | 'GUEST'
+
+
+const Dropdown = () => {
+    return (
+        <select>
+        {UserRoles.map(role => (
+            <option key={role} value={role}>{role}</option>
+        ))}
+        </select>
+    )
+}
+```
+
+2. 使用enum
+
+```typeScript
+enum UserRoles {
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+GUEST = 'GUEST'
+}
+
+function Dropdown() {
+  return (
+    <select>
+      {Object.values(UserRoles).map(role => (
+        <option key={role} value={role}>{role}</option>
+      ))}
+    </select>
+  )
+}
+
+console.log(Object.values(UserRoles)) // ['ADMIN', 'USER', 'GUEST']
+```
+
+而且，如果我们给enum赋的值里有数字，`Object.values()`会返回所有的值，包括数字，这可能不是我们想要的。
+
+```typescript
+enum Direction {
+  Up = 1,
+  Down = 2,
+  Left = 'dasda',
+  Right = 'fase1',
+}
+
+console.log(Object.values(Direction)) // ["Up", "Down", 1, 2, "dasda", "fase1"]
+```
+
+## 参考资源
+
+1. https://www.typescriptlang.org/docs/handbook/enums.html
+2. https://www.typescriptlang.org/play
+3. https://www.youtube.com/watch?v=jjMbPt_H3RQ&list=PLIvujZeVDLMx040-j1W4WFs1BxuTGdI_b&index=25
