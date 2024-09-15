@@ -55,10 +55,10 @@ const ThemeSwitch = () => {
   return (
     <div className="mr-5">
       <Menu as="div" className="relative inline-block text-left">
-        <div>
-          <Menu.Button>{resolvedTheme === 'dark' ? <Moon /> : <Sun />}</Menu.Button>
-        </div>
-        <Transition
+        <Menu.Button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          {resolvedTheme === 'dark' ? <Moon /> : <Sun />}
+        </Menu.Button>
+        {/* <Transition
           as={Fragment}
           enter="transition ease-out duration-100"
           enterFrom="transform opacity-0 scale-95"
@@ -103,7 +103,7 @@ const ThemeSwitch = () => {
               </div>
             </RadioGroup>
           </Menu.Items>
-        </Transition>
+        </Transition> */}
       </Menu>
     </div>
   )

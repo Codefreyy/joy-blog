@@ -8,15 +8,16 @@ const MobileNav = () => {
   const [navShow, setNavShow] = useState(false)
 
   const onToggleNav = () => {
-    setNavShow((status) => {
-      if (status) {
-        document.body.style.overflow = 'auto'
-      } else {
-        // Prevent scrolling
-        document.body.style.overflow = 'hidden'
-      }
-      return !status
-    })
+    // setNavShow((status) => {
+    //   if (status) {
+    //     document.body.style.overflow = 'auto'
+    //   } else {
+    //     // Prevent scrolling
+    //     document.body.style.overflow = 'hidden'
+    //   }
+    //   return !status
+    // })
+    return setNavShow((status) => !status)
   }
 
   return (
