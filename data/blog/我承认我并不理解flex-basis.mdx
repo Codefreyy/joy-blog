@@ -1,9 +1,9 @@
 ---
 title: '我承认，我并不理解flex-basis, flex-grow和flex-shrink'
 
-date: '2024-09-13'
+date: '2024-09-16'
 
-lastmod: '2024-09-13'
+lastmod: '2024-09-16'
 
 tags: ['flexbox', 'CSS']
 
@@ -14,20 +14,116 @@ summary: '很多开发者对flexbox的认识仅在于justify-content、align-ite
 
 ## Introduction
 
-正如我们所知，flexbox中的所有内容都与**主轴**和**交叉轴**挂钩。例如`justify-content`将沿主轴分布子项，而`align-items`将沿交叉轴分布子项。
+正如我们所知，flexbox中的所有内容都与**主轴**和**交叉轴**挂钩。例如`justify-content`将沿主轴分布子项，`align-items`将沿交叉轴分布子项。
 
-而 `width`和`height`却不遵循这个规则，它们是基于块级元素的，而不是基于flex容器的。这就是**_为什么我们需要`flex-basis`的原因_**。
+而 `width`和`height`却不遵循这个规则，它们是**基于块级元素**的，而不是基于flex容器的，`width`和`height`永远都分别指定长和宽，并不会根据主轴和交叉轴的方向而改变。
 
 ## flex-basis是什么？
 
-和其他`flex`属性一样，它也与轴有关，它允许我们设置元素在主轴方向上的**假设**大小。假如我们给一个元素设置了`flex-basis: 200px`，那么这个元素将会尽可能在主轴上占据200px的空间。
+`flex-basis`类似于`width`和`height`，但是它是基于flex容器的，在flex row中和`width`执行相同的操作；在flex column中和`height`执行相同的操作。
 
-但这只是一个建议而不是硬性约束，如果没有足够的空间，为了避免溢出，元素可能会变小。
+它允许我们设置元素在主轴方向上的**假设**大小。假如我们给一个元素设置了`flex-basis: 200px`，那么这个元素将会尽可能在主轴上占据200px的空间。但这只是一个建议而不是硬性约束，如果没有足够的空间，为了避免溢出，元素可能会变小。
 
-> [!Tip]
+> [!TIP]
 >
-> 1. `flex-basis`的默认值是`auto`，这意味着元素将根据其内容的大小来决定其大小。
-> 2. `flex-basis`可以接受任何长度单位，例如`px`、`em`、`%`等。
-> 3. 如果同时设置了`width`和`flex-basis`，`flex-basis`会覆盖`width`，即使 width 被放在 flex-basis 之后声明。
+> 1.  `flex-basis`的默认值是`auto`，这意味着元素将根据其内容的大小来决定其大小。
+> 2.  `flex-basis`若设置为`0`，则由 flex-grow 和 flex-shrink 决定最终尺寸。
+> 3.  如果同时设置了`width`和`flex-basis`，`flex-basis`会覆盖`width`，即使 width 被放在 flex-basis 之后声明。
+> 4.  如果同时设置`flex-basis`和`min-width`，`min-width`能够限制flex元素最小的宽度，而`flex-basis`则是一个建议值。
+
+```html
+<style>
+  .dice {
+    display: flex;
+    width: 300px;
+  }
+  .dot {
+    width: 1000px;
+    /* min-width: 110px; */
+    flex-basis: 150px;
+    height: 100px;
+    background-color: pink;
+  }
+</style>
+<body>
+  <div class="dice">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+</body>
+```
+
+在这个例子中，`.dice`宽度为300，`.dot`的`flex-basis`为150，三个`.dot`元素将会尽可能占据150px的空间，但是由于`.dice`的宽度只有300px，所以`.dot`元素会被压缩，变成每个100px。
+`width`不管设置得多大，都不会影响`.dot`的大小，因为`flex-basis`会覆盖`width`。
+
+但假如我们加上`min-width:110px`，`.dot`元素的最小宽度将会被限制在110px，而不会继续缩小。
 
 ## flex-grow和flex-shrink
+
+### flex-grow
+
+默认情况下，Flex 上下文中的元素将沿主轴缩小到最小舒适尺寸(默认值`flex-grow:0`)。这通常会创造额外的空间。
+
+我们可以使用flex-grow属性指定如何消耗该空间：
+
+假如我们有一个flex容器，里面有三个子元素，它们的`flex-grow`属性分别为1、2、0，那么它们将会占据的额外空间比例为1:2:0，即第一个元素占据1/3的空间，第二个元素占据2/3的空间，第三个元素不占据空间。
+
+### flex-shrink
+
+假如flex子项的总宽度大于flex容器的宽度，那么flex子项将会被压缩，`flex-shrink`属性指定了子项在这种情况下的压缩比例。
+
+```html
+<style>
+  .dice {
+    display: flex;
+    width: 300px;
+  }
+  .dot {
+    height: 100px;
+    background-color: pink;
+  }
+
+  .dot:nth-child(1) {
+    flex-basis: 300px;
+    flex-shrink: 3;
+  }
+
+  .dot:nth-child(2) {
+    flex-basis: 150px;
+    flex-shrink: 1;
+  }
+</style>
+<body>
+  <div class="dice">
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+</body>
+```
+
+由于子项的总宽度为450px，大于flex容器的300px，所以`.dot`元素将会被压缩150px。
+
+由于两个子项的`flex-shrink`属性分别为3和1，所以第一个子项将会被压缩 150 / (3+1) \* 3 = 112.5px，第二个子项将会被压缩 150 / (3+1) = 37.5px。
+
+最后第一个子项的宽度为187.5px，第二个子项的宽度为112.5px。
+
+### 小结
+
+1. 互斥关系
+   `flex-grow`控制当子项的总宽度小于flex容器的宽度时，子项如何分配额外的空间；`flex-shrink`控制当子项的总宽度大于flex容器的宽度时，子项如何被压缩。
+
+这意味着这两个属性一次只能有一个处于活动状态，因为它们是互斥的。
+
+2. 防止收窄
+   `flex-shrink`属性的默认值是1，这意味着子项将会被压缩，但是如果我们不希望某些子项被压缩，例如圆形的头像，我们不希望它被压成椭圆，可以将`flex-shrink`设置为0。
+
+## flex:1
+
+`flex`是`flex-grow`、`flex-shrink`和`flex-basis`的缩写，它的默认值是`0 1 auto`，这意味着元素不会增长，但会收缩，且`flex-basis`是`auto`，根据元素的内容来决定。
+
+而`flex:1`是`flex:1 1 0`的简写。flex: 1 的含义是：该项目会在容器中占据可用的剩余空间，并在空间不足时进行收缩。项目的初始尺寸为 0，完全依赖弹性布局规则进行空间分配。
+
+## 参考资料
+
+1. https://www.joshwcomeau.com/css/interactive-guide-to-flexbox/
