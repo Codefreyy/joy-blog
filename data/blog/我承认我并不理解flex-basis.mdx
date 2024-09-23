@@ -7,7 +7,7 @@ lastmod: '2024-09-16'
 
 tags: ['flexbox', 'CSS']
 
-draft: true
+draft: false
 
 summary: '很多开发者对flexbox的认识仅在于justify-content、align-items、flex-direction等属性，一问flex-basis就说不出所以然（是我），本文将详细介绍flex-basis、flex-grow、flex-shrink的概念、用法以及与其他flex属性的关系。'
 ---
@@ -122,7 +122,7 @@ summary: '很多开发者对flexbox的认识仅在于justify-content、align-ite
 
 `flex`是`flex-grow`、`flex-shrink`和`flex-basis`的缩写，它的默认值是`0 1 auto`，这意味着元素不会增长，但会收缩，且`flex-basis`是`auto`，根据元素的内容来决定。
 
-而`flex:1`是`flex:1 1 0`的简写。flex: 1 的含义是：该项目会在容器中占据可用的剩余空间，并在空间不足时进行收缩。项目的初始尺寸为 0，完全依赖弹性布局规则进行空间分配。
+而`flex:1`是`flex:1 1 0`的简写。flex: 1 的含义是：该项目会在容器中占据可用的剩余空间，并在空间不足时进行收缩。**项目的初始尺寸为 0，完全依赖弹性布局规则进行空间分配**。
 
 ## 参考资料
 
