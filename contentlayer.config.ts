@@ -139,6 +139,7 @@ export const Authors = defineDocumentType(() => ({
     linkedin: { type: 'string' },
     github: { type: 'string' },
     layout: { type: 'string' },
+    bilibili: { type: 'string' },
   },
   computedFields,
 }))
