@@ -1,0 +1,402 @@
+---
+title: '学习更好地使用 V8 突破 JavaScript 速度限制'
+
+date: '2024-10-06'
+
+lastmod: '2024-10-06'
+
+tags: ['V8', '性能优化']
+
+draft: false
+
+summary: '总结如何更好地使用 V8 引擎来优化 JavaScript 代码，包括 V8 的工作原理、优化编译器、隐藏类、标记值、数组处理等内容。'
+---
+
+## Introduction
+
+最近在看Frontend Masters上面[JavaScript Performance](https://frontendmasters.com/courses/web-performance/how-web-pages-are-built/)课以及V8团队的技术主管Daniel Clifford在Google I/O 2012的演讲:[Breaking the JavaScript Speed Limit with V8](https://www.youtube.com/watch?v=UJPdhx5zTaw&t=692s)，对于JS性能优化、V8 的底层原理、JIT即时编译、优化的指南/最佳实践等有了更多了解。写一篇博客梳理和总结一下～
+
+## 提高解析性能的总原则
+
+### 两条原则
+
+- have less code to parse
+- do as much parsing as you need and as little as you can get away with
+
+既然JS花了很久时间解析（parsing）为了提高性能，我们要么就让代码少一点，需要多少解析就做多少，能晚点解析就晚点解析。
+
+### 性能优化清单
+
+- be prepared before you have a problem
+  - understand how V8 optimized JavaScript
+  - write code mindfully
+  - learn your tools and how they can help you
+- Identify and understand the crux of your problem
+- Fix what matters
+
+在遇到问题前就做好准备（理解V8如何优化JS，聪明地写代码，知道哪些工具可以如何帮助我们），当遇到问题时能够识别和理解问题，优先修复那些最重要的。
+
+## Be prepared (遇到问题前的知识储备)
+
+### V8引擎工作原理
+
+那么首先我们来讲讲V8，V8引擎是一个JavaScript引擎，由google开发，用于用于[Google Chrome](https://zh.wikipedia.org/wiki/Google_Chrome)及[Chromium](https://zh.wikipedia.org/wiki/Chromium)中，主要目的是将JS编译成机器码。
+
+早期的 JavaScript 执行模型中，JavaScript 是通过解释器逐行解析和执行的。解释器会在每次执行时都对代码进行分析和解析，这样的开销较大，导致 JavaScript 的执行效率较低。
+
+V8采用just-in-time(JIT) 编译，把解释和编译结合起来（见下图）。首先由Ignition解释器启动代码执行，然后通过JIT逐步优化。对于被频繁调用的代码段，TurbonFan优化编译器会编译并优化它们，而对于不常用的代码，保持较低的编译成本，从而在性能和资源消耗之间找到平衡。
+
+<Image alt="v8" src="/static/images/blog-10-2024/v8.png" width={600} height={500} />
+
+#### V8有两个编译器
+
+- Full compiler can generate good code for any JavaScript
+  - quickly generate good but not greate JIT code
+  - Assumes (almost) nothing about types at compilation time
+  - uses inline caches (or ICs) to refine knowledge about types while program runs
+- Optimizing compiler produces great code for most JavaScript
+
+### V8如何决定优化哪些代码？
+
+#### 推测性优化（Speculative Optimization）
+
+“推测”指的是v8会基于代码的运行信息，推测代码在未来的执行模式，并进行相应的优化（optimize)。如果推测正确，代码将以更高效的方式执行；如果推测错误，V8会撤销这些优化（deoptimize）并重新编译代码。
+
+在下面这个例子中，`add`函数执行了10的7次方次的时间，是一个热点代码。
+
+```javascript
+const { PerformanceObserver, performance } = require('node:perf_hooks')
+
+let iterations = 1e7
+
+const a = 1
+const b = 2
+
+const add = (x, y) => x + y
+
+const obs = new PerformanceObserver((items) => {
+  console.log('Duration:', items.getEntries()[0]) // 输出测量的时长
+  performance.clearMarks()
+})
+obs.observe({ entryTypes: ['measure'] }) // 监听'measure'类型的性能事件
+
+// 开始标记 'start'
+performance.mark('start')
+
+while (iterations--) {
+  add(a, b)
+}
+
+// 标记 'end'，并进行性能测量
+performance.mark('end')
+
+// 测量从 'start' 到 'end' 之间的时间
+performance.measure('Start to End', 'start', 'end')
+```
+
+##### 优化
+
+当我们通过`node --trace-opt per.js`执行这段代码的时候，可以看到`turboFan`优化这段代码的痕迹
+
+```shell
+[marking 0x3ff7859e1941 <JSFunction add (sfi = 0x65a5069b0a9)> for optimization to TURBOFAN, ConcurrencyMode::kConcurrent, reason: small function]
+[compiling method 0x3ff7859e1941 <JSFunction add (sfi = 0x65a5069b0a9)> (target TURBOFAN), mode: ConcurrencyMode::kConcurrent]
+[marking 0x2eebf6fe8ac1 <JSFunction (sfi = 0x65a5069aff1)> for optimization to TURBOFAN, ConcurrencyMode::kConcurrent, reason: hot and stable]
+[compiling method 0x2eebf6fe8ac1 <JSFunction (sfi = 0x65a5069aff1)> (target TURBOFAN) OSR, mode: ConcurrencyMode::kConcurrent]
+[completed compiling 0x3ff7859e1941 <JSFunction add (sfi = 0x65a5069b0a9)> (target TURBOFAN) - took 0.583, 6.583, 0.000 ms]
+[completed optimizing 0x3ff7859e1941 <JSFunction add (sfi = 0x65a5069b0a9)> (target TURBOFAN)]
+[completed compiling 0x2eebf6fe8ac1 <JSFunction (sfi = 0x65a5069aff1)> (target TURBOFAN) OSR - took 0.167, 5.958, 0.208 ms]
+[completed optimizing 0x2eebf6fe8ac1 <JSFunction (sfi = 0x65a5069aff1)> (target TURBOFAN) OSR]
+Duration: PerformanceMeasure {
+  name: 'Start to End',
+  entryType: 'measure',
+  startTime: 118.07599997520447,
+  duration: 16.154207944869995
+}
+```
+
+上面显示`turbonFan`优化了`add`函数原因是
+
+- reason: small function 表示该函数被标记为小函数，通常小函数更容易优化。
+- reason: hot and stable 表示这个函数是“热点代码”（频繁执行）且表现稳定，因此非常适合优化。
+
+此外**OSR**（On-Stack Replacement）意味着V8在函数执行过程中进行优化，替换已经在运行的代码。**ConcurrencyMode::kConcurrent** 表示该优化是在并发模式下进行的，意味着它不会阻塞其他线程的执行。
+
+##### 反优化
+
+如果我们在`while`循环后面加一行`add('ad', 'a')`打破了`turboFan`之前觉得这个函数总是稳定地接收数字的印象，`turboFan`会马上进行`deoptimization`反优化。
+
+通过`node --trace-deopt --trace-opt per.js`可以看到V8优化的和反优化的代码，帮助我们定位问题。
+
+```shell
+[marking 0x39bb44de1941 <JSFunction add (sfi = 0x39bd2845b169)> for optimization to TURBOFAN, ConcurrencyMode::kConcurrent, reason: small function]
+[compiling method 0x39bb44de1941 <JSFunction add (sfi = 0x39bd2845b169)> (target TURBOFAN), mode: ConcurrencyMode::kConcurrent]
+[marking 0x14f95c268b09 <JSFunction (sfi = 0x39bd2845b0b1)> for optimization to TURBOFAN, ConcurrencyMode::kConcurrent, reason: hot and stable]
+[compiling method 0x14f95c268b09 <JSFunction (sfi = 0x39bd2845b0b1)> (target TURBOFAN) OSR, mode: ConcurrencyMode::kConcurrent]
+[completed compiling 0x39bb44de1941 <JSFunction add (sfi = 0x39bd2845b169)> (target TURBOFAN) - took 0.583, 6.583, 0.042 ms]
+[completed optimizing 0x39bb44de1941 <JSFunction add (sfi = 0x39bd2845b169)> (target TURBOFAN)]
+[completed compiling 0x14f95c268b09 <JSFunction (sfi = 0x39bd2845b0b1)> (target TURBOFAN) OSR - took 0.208, 6.166, 0.042 ms]
+[completed optimizing 0x14f95c268b09 <JSFunction (sfi = 0x39bd2845b0b1)> (target TURBOFAN) OSR]
+[bailout (kind: deopt-eager, reason: Insufficient type feedback for call): begin. deoptimizing 0x14f95c268b09 <JSFunction (sfi = 0x39bd2845b0b1)>, 0x1feccee34199 <Code TURBOFAN>, opt id 1, bytecode offset 116, deopt exit 6, FP to SP delta 160, caller SP 0x00016d8a24f0, pc 0x00014000d954]
+[bailout (kind: deopt-eager, reason: not a Smi): begin. deoptimizing 0x39bb44de1941 <JSFunction add (sfi = 0x39bd2845b169)>, 0x1feccee33d49 <Code TURBOFAN>, opt id 0, bytecode offset 2, deopt exit 0, FP to SP delta 32, caller SP 0x00016d8a2418, pc 0x00014000d774]
+Duration: PerformanceMeasure {
+  name: 'Start to End',
+  entryType: 'measure',
+  startTime: 93.81599998474121,
+  duration: 15.634250164031982
+}
+```
+
+- `Deoptimizing reason: Insufficient type feedback for call`，这意味着代码运行过程中传递的参数类型发生了变化，导致V8推测的优化条件不再成立。
+
+- **deopt-eager** 表示V8采取了**“主动去优化”**，也就是尽快撤销优化，回退到未优化状态。
+- [bailout (kind: deopt-eager, reason: not a Smi)]: `Smi` 是 V8 中表示**小整数**的一种内部优化格式。当V8期望接收的值是一个小整数（Smi）时，却收到了其他类型的值，导致去优化。
+
+从这个例子我们也可以知道优化的一个原则
+
+> Prefer monomorphic over polymorphic wherever possible
+
+尽量不要在代码中混合操作或不同类型的对象，尽量选择单态代码而不是多态。
+
+- 单态代码是指**某个函数或属性总是处理相同类型的值**。也就是说，V8每次调用这个函数或访问某个属性时，类型是固定的。
+
+- 多态代码是指**函数或属性处理不同类型的值**，即在多次调用过程中，传递给函数或属性的值类型可能发生变化。
+
+除此之外，优化编译器（如turboFan）目前无法对`try {} catch{}`块的代码进行优化。可以通过把可能影响性能的函数单独抽出来，避免在`try {} catch{}`中调用。如下：
+
+```javascript
+function perf_sensitive() {
+  // do performance_sensitive work here
+}
+
+try {
+  perf_sensitive()
+} catch (e) {
+  // handle exceptions here
+}
+```
+
+#### 隐藏类（Hidden Classes）
+
+JavaScript是一种动态类型语言，通常对象的属性是可以随时添加、删除和修改的。如我们上面所说`turbanFan`会在你持续地以可预测的方式执行代码的时候来优 化你的代码，如果太灵活变化太多，这种灵活性会导致性能损耗。
+
+为了解决这一问题，V8引擎引入了隐藏类（hidden class)机制
+
+- 它可以在**运行时**为对象创造隐藏类，以提升属性访问的效率。
+
+- 有相同的的隐藏类的对象，可以使用相同的优化后的代码。
+
+我们来看一个例子：
+
+```javascript
+function Point(x, y) {
+  this.x = x
+  this.y = y
+}
+var p1 = new Point(11, 22)
+var p2 = new Point(33, 44)
+```
+
+在创建第一个p1实例的时候会创建如下图的hidden classes，一开始是空的Point hidden class，然后创建一个有了x属性的Point hidden class，然后是有了y属性的Point hidden class。
+
+当创建第二个p2实例的时候，这个隐藏类结构已经在那了。我们可以说p1和p2有相通的隐藏类。但如果我们加上一行`p2.z = 55` ，p2和p1就有了不同的隐藏类。
+
+也就是说两个对象要有相同的隐藏类必须满足两个条件
+
+- 起点相同：它们必须以相同的方式创建。
+- 路径相同：在对象生命周期中，必须添加相同的属性，且顺序相同。
+
+<Image
+  alt="hidden-class"
+  src="/static/images/blog-10-2024/hidden-class.png"
+  width={300}
+  height={500}
+/>
+
+> [!Tip]
+>
+> Avoid the Speed trap
+>
+> - Initialize all object members in constructor functions
+> - Always initialize object members in the same order
+>
+> 根据我们上面学到的，可以总结两点技巧，
+>
+> **1、在构造函数中初始化所有对象成员**：
+>
+> - 在对象创建时一次性初始化所有属性，避免在对象生命周期中动态添加或修改属性。这样V8引擎可以为对象生成一个稳定的隐藏类，从而提高代码的执行效率。
+>
+> **2、始终按照相同的顺序初始化对象成员**：
+>
+> - 当创建多个对象时，确保所有对象的属性按照相同的顺序进行初始化。这样可以让V8引擎复用相同的隐藏类，使得这些对象可以共享优化后的代码，避免多次创建新的隐藏类所带来的性能损耗。
+
+#### 标记值（Tagged Values ）和数组
+
+##### Tagged Values
+
+Tagged value是是V8引擎用于高效存储和区分不同类型数据的一种机制
+
+1、**Objects（对象）**：
+
+- 对象类型使用**对象指针（object pointer）\*\*存储。对象指针的最低位（第0位）为\*\*1**，这表示这是一个对象。这种方式使得V8可以快速区分一个值是对象还是整数。
+
+2、**Small Integers（Smi，小整数）**：
+
+- 小整数（Smi）是指**31位带符号整数**，最低位（第0位）为**0**。因为小整数的表示不需要使用完整的32位，所以V8利用这一位来标记它是否是对象或者是整数。
+- 例如，31位整数可以用较少的存储空间进行表示，这有助于提高整数运算的效率。
+
+3、**Boxed double（封装的双精度浮点数）**：
+
+- 对于双精度浮点数（如图中的`123.45`），V8会使用一种“封装”的方式，将浮点数放在一个特殊的对象中存储。这样可以区分浮点数和其他值，尽管其操作可能会比处理小整数稍微慢一些。
+
+> [!Tip]
+>
+> 建议开发者**优先使用可以表示为31位带符号整数的数值**。这背后的原因是，V8引擎使用了一种称为Smi（Small Integer，小整数）的内部机制来优化整数处理。如果你的数字可以用31位整数表示，V8可以直接将其作为小整数处理，不需要进行额外的装箱操作（即不需要将数字包装为对象），从而提升性能。
+
+##### 数组处理
+
+- **Fast Elements**：这是V8为数组提供的高效存储方式，适用于**紧凑的键集**（连续的数组索引），即从索引`0`开始并按顺序排列的数组。这种存储方式可以提升性能。
+- **Dictionary Elements**：当数组的键（索引）变得不连续或非常**稀疏**时，V8会使用哈希表来存储元素，性能相对较差。因此，应该尽量避免让数组变成稀疏的状态。
+
+> [!Tip]
+>
+> 优化建议：
+>
+> - Use contiguour keys starting at 0 for arrays 使用从0开始的连续
+> - Don't pre-allocate large arrays (64k elements) to their maximum size instead grow as you go **不要预先分配大数组（64k元素）**：
+> - Don't delete elements in arrays, especially numeric arrays 不要删除数组中的元素，特别是数字数组
+> - Don't load uninitialized or deleted elements 不要访问未初始化或已删除的元素
+>
+>   在下面这个例子中，我们对`a[0]` 和`b`进行按位或操作，然后再把结果赋值回`a`。
+>
+>   example1中没有对a[0]进行初始化，在第一次循环中`a[0]` 是 `undefined`，而 `b` 是一个数值，需要依赖隐式类型转换将 `undefined` 视为 `0`，然后执行按位或运算，这在第一次循环中可能会导致潜在的性能问题。
+>
+>   JavaScript 引擎会发现类型不一致（因为后续的按位操作预期是数值类型）。这种类型变化会导致引擎的优化编译器（如TurboFan）无法进行有效优化，甚至可能触发去优化（Deoptimization），使得代码回退到非优化状态。这会导致代码执行效率下降。
+>
+>   ```javascript
+>   // example1
+>   a = new Array()
+>   for (var b = 0; b < 10; b++) {
+>     a[0] |= b // oh no!
+>   }
+>
+>   // example2
+>   a = new Array()
+>   a[0] = 0
+>   for (var b = 0; b < 10; b++) {
+>     a[0] |= b // Much better!
+>   }
+>   ```
+>
+> - Initialize using array literals for small fixed-sized arrays
+>
+>   对于固定大小的小数组尽量用文字数组初始化
+>
+>   ```javascript
+>   var a = new Array()
+>   a[0] = 77 // 分配内存
+>   a[1] = 88 //分配内存
+>   a[2] = 0.5 // 分配内存并转换
+>   a[3] = true // 分配内存并转换
+>   ```
+>
+>   当 `a[0]` 和 `a[1]` 被赋值时，它们都是整数（Smi，Small Integers），V8 使用的是**整数数组存储模型**。
+>
+>   当 `a[2]` 被赋值为浮点数时，V8 引擎不得不转换数组的存储模型，从存储整数转为存储**浮点数**，这是一个转换操作。
+>
+>   当 `a[3]` 被赋值为布尔值时，V8 再次不得不转换存储模型，这次是从浮点数转为**对象类型数组**，这会导致进一步的性能开销。
+>
+>   ```javascript
+>   var a = [77, 88, 0.5, true]
+>   ```
+>
+>   **一次性初始化数组**： 在这个例子中，数组 `a` 被一次性初始化，包含了所有类型的数据（整数、浮点数和布尔值）。这种方式让V8引擎能够立即为数组分配合适的存储空间并选择合适的存储模型，从而避免逐步赋值带来的内存重新分配和类型转换开销。
+>
+> - Preallocate small arrays to correct size before using them
+> - Don't store non-numeric values (objects) in numeric arrays
+>
+>   V8引擎对**数值数组**进行了特别优化，可以快速访问和处理数值类型的数组。如果你在数值数组中存储了非数值类型（如对象），V8需要改变数组的存储模型（从高效的数值数组转换为通用对象数组），这会带来性能上的开销。
+
+#### 内联缓存 Inline Caches
+
+V8通过内联缓存（ICs）机制来高效处理数据类型。ICs的工作方式如下：
+
+1. **类型相关的代码执行**：V8在执行代码时根据不同的数据类型生成不同的操作路径，这样可以提升类型一致情况下的执行效率。
+2. **类型假设的验证**：在执行操作之前，V8首先验证之前的类型假设是否仍然成立，如果类型一致，V8可以沿用先前的优化。
+3. **动态调整**：如果发现新的类型，V8可以在运行时通过**回补（backpatching）**机制来动态更新代码路径，处理新发现的类型信息。‘
+
+我们来过一下下面这个例子
+
+```javascript
+function Person(age) {
+  this.age = age
+}
+
+Person.prototype.getAge = function () {
+  return this.age
+}
+
+let john = new Person(25)
+let jane = new Person(30)
+
+// 多次调用 getAge 方法
+console.log(john.getAge()) // 25
+console.log(jane.getAge()) // 30
+console.log(john.getAge()) // 25
+```
+
+**第一次调用** `john.getAge()`：
+
+- 当我们第一次调用 `john.getAge()` 时，V8 并不知道 `john` 的具体类型，因此它会通过动态查找找到 `getAge` 方法。
+- 在这一步，V8 还不知道 `john.age` 是一个什么类型的值，所以会进行全局查找属性，并返回结果。
+
+**ICs 缓存类型信息**：
+
+- 在调用之后，V8 会记住 `john` 是一个 `Person` 对象，并且 `getAge()` 方法访问的是 `age` 属性。
+- 接下来，当我们调用 `jane.getAge()` 时，V8 会检查 `jane` 是否与 `john` 拥有相同的隐藏类（hidden class），并确认两者都属于 `Person`，因此可以使用相同的优化路径。
+
+**后续调用利用缓存**：
+
+- 当我们再次调用 `john.getAge()` 或 `jane.getAge()`，由于 V8 已经通过 **Inline Caches (ICs)** 记住了 `Person` 对象的类型和属性访问路径，便可以直接使用优化后的代码，而无需再进行动态查找。
+- 这样，V8 可以通过缓存类型信息（即 `Person` 类型和 `age` 属性）来加速后续的调用，避免了重复的查找和类型验证过程。
+
+**类型改变时的动态调整**：
+
+- 如果后来我们修改了 `john` 或 `jane` 的结构，例如在 `john` 中添加一个新的属性或删除 `age` 属性，V8 会发现类型发生了变化。在这种情况下，V8 会通过 **回补（backpatching）** 调整内联缓存，使其适应新的类型或结构。
+
+  > 在回补过程中，V8 会根据新的访问模式重新调整缓存，将新的类型信息和优化路径存入 **Inline Caches** 中，以便后续调用可以直接使用。这一过程是无缝的，程序无需重新编译整个代码。
+
+## Identify and Understand（遇到问题后的识别和理解）
+
+- Ensure problem is JavaScript
+  - 首先要确保性能问题是由JavaScript代码本身引起的，而不是外部因素，比如网络延迟、后端响应时间过长等。可以通过禁用第三方库、缓存、外部API请求等方式，缩小问题范围，集中排查JavaScript代码。
+- Reduce to pure JavaScript(no DOM)
+  - 浏览器中的DOM操作和事件监听等会给JavaScript执行带来不必要的复杂性，而在纯JavaScript环境中（如Node.js）运行，可以帮助识别纯粹的JavaScript性能问题。
+- Collect metrics
+  - 性能数据是定位问题的基础。在进行性能优化之前，应该收集各种指标数据，如函数执行时间、调用频率、内存使用情况等。通过收集这些数据，可以更好地量化问题并确定优化目标。
+- Local bottlenecks
+  - 通过分析函数的执行时间、调用频率和堆栈信息，可以识别局部性能瓶颈。这些瓶颈可能是一个循环内过于频繁的函数调用、数据处理过程中的冗余操作等。了解瓶颈所在的代码段，可以更有针对性地进行优化。
+
+#### 采样profiler
+
+V8 引擎提供了一种高效的性能分析工具，叫做 **采样 Profiler**。可以通过在 Node.js 环境中使用 `--prof` 标志来启动采样分析。
+
+```bash
+node --prof your-script.js
+```
+
+这个选项会在同级文件夹生成一个性能日志文件，其中包含每个函数的执行时间、调用频率和调用栈信息。生成的日志文件可以通过 `node --prof-process` 来解析：
+
+```bash
+node --prof-process isolate-0xnnnnnnn-v8.log > processed-log.txt
+```
+
+这会生成一份详细的报告，包括：
+
+- **函数的执行时间**：哪些函数耗费了最多的时间。
+- **调用栈信息**：哪些函数调用了其他函数，从而导致了性能问题。
+
+## 参考资料
+
+1. https://www.youtube.com/watch?v=UJPdhx5zTaw&t=692s
+2. https://frontendmasters.com/courses/web-performance/how-web-pages-are-built/
