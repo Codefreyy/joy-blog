@@ -8,20 +8,26 @@ import PageTitle from '@/components/PageTitle'
 import SectionContainer from '@/components/SectionContainer'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
+import { Toc } from 'pliny/mdx-plugins'
+import TOCInline from '@/components/TOCInline'
+
+const editUrl = (path) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
 
 interface LayoutProps {
   content: CoreContent<Blog>
   children: ReactNode
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
+  toc: Toc
 }
 
-export default function PostLayout({ content, next, prev, children }: LayoutProps) {
-  const { path, slug, date, title } = content
+export default function PostLayout({ content, next, prev, children, toc }: LayoutProps) {
+  const { filePath, path, slug, date, title } = content
 
   return (
     <SectionContainer>
       <ScrollTopAndComment />
+
       <article>
         <div>
           <header>
@@ -39,15 +45,28 @@ export default function PostLayout({ content, next, prev, children }: LayoutProp
               </div>
             </div>
           </header>
-          <div className="grid-rows-[auto_1fr] divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0">
-            <div className="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
-              <div className="prose max-w-none pb-8 pt-10 dark:prose-invert">{children}</div>
+          <div className="dark:divide-gray-700  xl:grid xl:grid-cols-4">
+            <div className="toc not-prose col-span-1 mr-3 mt-8 hidden xl:block">
+              <TOCInline toc={toc} />
             </div>
-            {siteMetadata.comments && (
-              <div className="pb-6 pt-6 text-center text-gray-700 dark:text-gray-300" id="comment">
-                <Comments slug={slug} />
+            <div className="ml-3 divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:pb-0">
+              <div className="prose max-w-none pb-8 pt-10 dark:prose-invert">{children}</div>
+              <div>
+                {' '}
+                <div className="pb-6 pt-6 text-sm text-gray-700 dark:text-gray-300">
+                  <Link href={editUrl(filePath)}>View on GitHub</Link>
+                </div>
+                {siteMetadata.comments && (
+                  <div
+                    className="pb-6 pt-6 text-center text-gray-700 dark:text-gray-300"
+                    id="comment"
+                  >
+                    <Comments slug={slug} />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
             <footer>
               <div className="flex flex-col text-sm font-medium sm:flex-row sm:justify-between sm:text-base">
                 {prev && prev.path && (

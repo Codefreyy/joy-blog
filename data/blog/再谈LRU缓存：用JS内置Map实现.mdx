@@ -9,14 +9,14 @@ tags: ['算法', '数据结构']
 
 draft: false
 
+layout: 'PostSimple'
+
 summary: '介绍了LRU缓存的使用场景，以及用JS内置Map数据结构实现LRU缓存的方法。'
 ---
 
 ### 引入
 
 之前我在“LRU缓存算法: HashMap + 双向链表”中已经聊过LRU缓存，在近期的面试中被考到这题，面试官提到了用`Map`来实现，更加简单且查找和更新的时间复杂度更低。接下来我就从头再讲讲LRU缓存的使用场景，以及用`Map`如何巧妙、快速地实现LRU缓存。该博客的视频讲解在[这里](https://www.bilibili.com/video/BV1xm23YYE8v/?vd_source=df5b58e116cad75d6d81a2ef180dbe23)。
-
-<TOCInline toc={props.toc} exclude="引入" asDisclosure />
 
 ### LRU缓存使用场景
 

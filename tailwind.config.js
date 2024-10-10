@@ -30,6 +30,10 @@ module.exports = {
       colors: {
         primary: colors.amber,
         gray: colors.gray,
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
       },
       typography: ({ theme }) => ({
         DEFAULT: {
