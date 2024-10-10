@@ -12,6 +12,12 @@ import { Toc } from 'pliny/mdx-plugins'
 import TOCInline from '@/components/TOCInline'
 
 const editUrl = (path) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
+const postDateTemplate: Intl.DateTimeFormatOptions = {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+}
 
 interface LayoutProps {
   content: CoreContent<Blog>
@@ -28,6 +34,23 @@ export default function PostLayout({ content, next, prev, children, toc }: Layou
       <ScrollTopAndComment />
       <article>
         <div>
+          <header className="pt-6 xl:pb-6">
+            <div className="space-y-1 text-left">
+              <div>
+                <PageTitle>{title}</PageTitle>
+              </div>
+              <dl className="space-y-10">
+                <div>
+                  <dt className="sr-only">Published on</dt>
+                  <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
+                    <time dateTime={date}>
+                      {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
+                    </time>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </header>
           <div className="grid-rows-[auto_1fr] divide-y divide-muted-foreground pb-8 dark:divide-muted xl:divide-y-0">
             <div className="xl:col-span-3 xl:row-span-2 xl:pb-0">
               <div className="prose max-w-2xl pb-8 pt-10 dark:prose-invert">
