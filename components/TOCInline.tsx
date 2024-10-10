@@ -82,12 +82,12 @@ const TOCInline = ({
       const id = heading.getAttribute('id')
       if (id) {
         const rect = heading.getBoundingClientRect()
-        if (rect.top + window.scrollY - 300 <= scrollPosition) {
+        if (rect.top + window.scrollY - 20 <= scrollPosition) {
           currentId = id
         }
       }
     })
-
+    console.log(currentId)
     setActiveId(currentId)
   }
 
