@@ -1,0 +1,230 @@
+---
+title: '再谈LRU缓存：用JS内置Map实现'
+
+date: '2024-10-10'
+
+lastmod: '2024-10-10'
+
+tags: ['算法', '数据结构']
+
+draft: false
+
+summary: '介绍了LRU缓存的使用场景，以及用JS内置Map数据结构实现LRU缓存的方法。'
+---
+
+### 引入
+
+之前我在“LRU缓存算法: HashMap + 双向链表”中已经聊过LRU缓存，在近期的面试中被考到这题，面试官提到了用`Map`来实现，更加简单且查找和更新的时间复杂度更低。接下来我就从头再讲讲LRU缓存的使用场景，以及用`Map`如何巧妙、快速地实现LRU缓存。
+
+<TOCInline toc={props.toc} exclude="引入" asDisclosure />
+
+### LRU缓存使用场景
+
+1. 页面浏览器缓存
+
+   浏览器会缓存用户访问过的网页，以便在再次访问这些网页时能够快速加载。由于计算机内存有限，浏览器需要一个机制来决定哪些页面应该保留在缓存中，哪些应该被清除。
+
+   使用LRU缓存：
+
+   - 当用户访问一个新的网页时，浏览器会将该页面添加到缓存中。
+   - 如果缓存已满，则删除最久未访问的页面，以腾出空间存储新页面。
+   - 当用户回到最近访问过的网页时，页面会迅速加载，因为它仍在缓存中。
+
+2. 数据库查询结果缓存
+
+   在大型数据库应用中，查询操作通常是最耗时的操作之一。如果相同的查询频繁执行，可以将查询结果缓存起来，以减少数据库的压力。LRU 缓存可以确保只有最常用的查询结果保留在缓存中，而过期的数据则被淘汰。
+
+   使用LRU缓存
+
+   - 每当数据库执行查询时，首先检查缓存中是否已有该查询的结果。
+   - 如果缓存中不存在（称为缓存未命中），则执行查询，并将结果存储在缓存中。
+   - 如果缓存已满，则根据 LRU 策略删除最久未使用的查询结果。
+
+3. 内容分发网络CDN缓存
+
+   内容分发网络（CDN）用于将网站内容分发到离用户最近的服务器节点上，以提高访问速度。CDN 服务器需要缓存流行的内容，以便在用户请求时可以快速提供。
+
+   类似于浏览器页面缓存，当用户请求某个内容时，CDN 服务器会先检查缓存中是否已有该内容。如果缓存已满且需要添加新内容，则使用 LRU 策略移除最久未访问的内容。新内容被缓存起来，以便在下一次用户请求时能够快速提供。
+
+这些使用场景体现了LRU缓存的优势：**_提高访问速度、节省资源、优雅地管理数据，使系统能够在资源有限的情况下保持高效_**。
+
+### LRU缓存实现
+
+#### 思考
+
+根据上面的场景描述，我们知道LRU缓存需要满足以下特点
+
+1. 缓存一定容量的数据
+2. 缓存数据按照使用时间排序
+3. 当缓存达到容量上限时，删除最久未被访问的数据，并将新数据插入到缓存中
+
+之前使用**Map（哈希表）+双向链表**来实现LRU缓存，是向利用哈希表快速查找键对应的节点，双向链表用于维护节点的访问顺序，最左边表示最久未使用，最右边表示最近使用。
+
+但是过程中维护链表，完成它的插入、删除和移动操作比较繁琐。
+
+在JavaScript中，我们有内置的`Map`数据结构，它有一个很大的特点可以帮我们做到这件事。
+
+​ Map是**按插入顺序维护键值对**的
+
+怎么体现呢？我们来看一个例子：
+
+```javascript {6}
+const map = new Map()
+map.set('a', 1)
+map.set('b', 2)
+map.set('c', 3)
+
+const iterator = map.keys() // 获取键的迭代器
+console.log(iterator)
+console.log(iterator.next())
+console.log(iterator.next())
+console.log(iterator.next())
+console.log(iterator.next())
+```
+
+打印：
+
+```bash
+[Map Iterator] { 'a', 'b', 'c' }
+{ value: 'a', done: false }
+{ value: 'b', done: false }
+{ value: 'c', done: false }
+{ value: undefined, done: true }
+```
+
+可以看到`map.keys()`会返回一个迭代器对象，可以参考mdn的对这块的解释[Map.prototype.keys()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/keys)，这个迭代器对象包括了map里按插入顺序排列的每个元素的键。可以看到当我们调用`iterator.next()`之后，打印了第一个插入的`a`，`done`为`false`表示还没有迭代完。最后依次迭代后，打印`{ value: undefined, done: true }`表示迭代完成。
+
+记住这个特点我们就可以着手实现**LRU**缓存了！
+
+#### 实现
+
+```javascript
+class LRU {
+  // 首先初始化一个类，初始化`capacity`和map
+  constructor(capacity) {
+    this.capacity = capacity
+    this.map = new Map()
+  }
+  // 虽然是get，但为了确保它在迭代器对象的最后，要先删除那个键，再次插入。
+  get(key) {
+    if (!this.map.has(key)) {
+      return -1
+    }
+    const value = this.map.get(key)
+    this.map.delete(key)
+    this.map.set(key, value)
+    return value
+  }
+
+  put(key, value) {
+    if (!this.map.has(key)) {
+      if (this.map.size >= this.capacity) {
+        // 如果缓存已满，删除最久未使用的键
+        const oldestKey = this.map.keys().next().value
+        this.map.delete(oldestKey)
+      }
+    } else {
+      // 如果键已存在，删除旧的位置
+      this.map.delete(key)
+    }
+
+    // 不管键存不存在，删除完该删除的之后，都插入新的键值对
+    this.map.set(key, value)
+  }
+}
+```
+
+#### 测试
+
+测试场景
+
+- 正常的 `get` 和 `put` 操作。
+- 缓存容量已满时，是否正确移除最久未使用的元素。
+- 缓存中不存在的键的返回情况。
+
+```javascript
+const cache = new LRU(2)
+
+console.log(cache.put(1, 1))
+console.log(cache.put(2, 2))
+console.log(cache.get(1)) // 返回 1，因为键 1 存在缓存中
+
+cache.put(3, 3) // 此时缓存容量已满，移除最久未使用的键 2
+console.log(cache.get(2)) // 返回 -1，因为键 2 已被移除
+
+cache.put(4, 4) // 移除最久未使用的键 1
+console.log(cache.get(1)) // 返回 -1，因为键 1 已被移除
+console.log(cache.get(3)) // 返回 3，因为键 3 仍在缓存中
+console.log(cache.get(4)) // 返回 4，因为键 4 是最新插入的
+
+cache.put(4, 5) // 更新键 4 的值
+console.log(cache.get(4)) // 返回 5
+```
+
+#### 时间空间复杂度分析
+
+##### 时间复杂度
+
+`Map` 的时间复杂度是 O(1) 的原因在于它底层使用 **哈希表（Hash Table）** 作为其底层数据结构。
+
+哈希表的工作原理是，使用一个**_哈希函数_**将每个键映射到一个特定的内存位置（也叫做“桶 bucket”或“槽 slot”）。当我们将一个键插入 `Map` 中时，哈希函数会根据该键生成一个整数值（称为哈希值），这个哈希值决定了数据存储的位置。
+
+<Image src="/static/images/blog-10-2024/hashmap.png" alt="hashfunction" width={600} height={500} />
+
+- 查找、插入和删除操作都依赖于这个哈希函数，能够直接访问到数据的内存位置，因此操作时间通常是 O(1)。
+
+##### 空间复杂度
+
+`Map` 数据结构的空间复杂度在大多数情况下是 **O(n)**，其中 `n` 是 `Map` 中存储的键值对的数量。
+
+当哈希表中的元素数量增加时，可能需要进行 **动态扩容**。当负载因子（即填充的键值对数量与哈希表大小的比率）达到一定阈值时，哈希表会自动扩展其大小，这会导致数组大小增大。这种扩展使得哈希表在最坏情况下可能会有更多的空间需求。
+
+但这种操作不频繁发生，不会显著影响平均空间复杂度。
+
+#### 拓展
+
+我们可以给`LRU`缓存添加一些其他的功能，例如：
+
+- `delete`：删除指定的键值对
+- `size`：返回缓存中的键值对数量
+- `clear`：清空缓存
+- `keys`：返回缓存中所有的键
+- `values`：返回缓存中所有的值
+- `entries`：返回缓存中所有的键值对
+- `has`：判断缓存中是否存在某个键
+- `isFull`：判断缓存是否已满
+
+```javascript
+delete() {
+    if(this.map.has(key)) {
+      this.map.delete(key)
+    }
+}
+size() {
+  return this.map.size;
+}
+
+clear() {
+  this.map.clear();
+}
+
+keys() {
+  return Array.from(this.map.keys());
+}
+
+values() {
+  return Array.from(this.map.values());
+}
+
+entries() {
+  return Array.from(this.map.entries());
+}
+
+has(key) {
+  return this.map.has(key);
+}
+
+isFull() {
+  return this.map.size >= this.capacity;
+}
+```
