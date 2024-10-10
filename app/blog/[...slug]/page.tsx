@@ -21,6 +21,15 @@ const layouts = {
   PostBanner,
 }
 
+function removeNumericSuffix(url) {
+  return url.replace(/-\d+$/, (match) => {
+    // Only replace if it's a standalone numeric suffix at the end
+    const parts = url.split('-')
+    const lastPart = parts[parts.length - 1]
+    return /^\d+$/.test(lastPart) ? '' : match
+  })
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -37,7 +46,6 @@ export async function generateMetadata({
   if (!post) {
     return
   }
-  console.log(post.toc)
 
   const publishedAt = new Date(post.date).toISOString()
   const modifiedAt = new Date(post.lastmod || post.date).toISOString()
@@ -82,6 +90,20 @@ export const generateStaticParams = async () => {
   return paths
 }
 
+const generateUniqueUrl = (url, seenUrls) => {
+  let uniqueUrl = url
+  let count = 1
+  // Check if the URL is already in the set of seen URLs
+  while (seenUrls.has(uniqueUrl)) {
+    // If it is, append or increment a numeric suffix to create a unique URL
+    uniqueUrl = `${url}-${count}`
+    count++
+  }
+  // Add the unique URL to the set of seen URLs to track it
+  seenUrls.add(uniqueUrl)
+  return uniqueUrl
+}
+
 export default async function Page({ params }: { params: { slug: string[] } }) {
   const slug = decodeURI(params.slug.join('/'))
   // Filter out drafts in production
@@ -94,6 +116,21 @@ export default async function Page({ params }: { params: { slug: string[] } }) {
   const prev = sortedCoreContents[postIndex + 1]
   const next = sortedCoreContents[postIndex - 1]
   const post = allBlogs.find((p) => p.slug === slug) as Blog
+
+  const seenUrls = new Set()
+
+  const updatedToc = Array.isArray(post?.toc)
+    ? post?.toc.map((item) => {
+        // Generate a unique URL for each item, removing existing suffixes before checking duplicates
+        const cleanedUrl = removeNumericSuffix(item.url)
+        return {
+          ...item,
+          url: generateUniqueUrl(cleanedUrl, seenUrls),
+        }
+      })
+    : []
+
+  console.log(updatedToc, 'updatedToc')
   const authorList = post?.authors || ['default']
   const authorDetails = authorList.map((author) => {
     const authorResults = allAuthors.find((p) => p.slug === author)
@@ -120,9 +157,9 @@ export default async function Page({ params }: { params: { slug: string[] } }) {
         authorDetails={authorDetails}
         next={next}
         prev={prev}
-        toc={post.toc}
+        toc={updatedToc}
       >
-        <MDXLayoutRenderer code={post.body.code} components={components} toc={post.toc} />
+        <MDXLayoutRenderer code={post.body.code} components={components} toc={updatedToc} />
       </Layout>
     </>
   )

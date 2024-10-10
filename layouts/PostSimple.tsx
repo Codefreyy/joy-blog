@@ -51,16 +51,21 @@ export default function PostLayout({ content, next, prev, children, toc }: Layou
               </dl>
             </div>
           </header>
-          <div className="flex gap-5">
-            <div className="grid-rows-[auto_1fr] divide-y divide-muted-foreground pb-8 dark:divide-muted xl:divide-y-0">
+          <div className="flex flex-col gap-5 md:container md:mx-auto xl:flex-row">
+            <div className="grid-rows-[auto_1fr]  pb-8 dark:divide-muted ">
               <div className="xl:col-span-3 xl:row-span-2 xl:pb-0">
-                <div className="prose max-w-2xl pb-8 pt-10 dark:prose-invert">
+                <div className="prose  prose-sm pb-8 dark:prose-invert  xl:prose-base">
                   <div>{children}</div>
                 </div>
                 <div>
                   {' '}
                   <div className="pb-6 pt-6 text-sm text-gray-700 dark:text-gray-300">
-                    <Link href={editUrl(filePath)}>View on GitHub</Link>
+                    <Link
+                      href={editUrl(filePath)}
+                      className="text-gray-700 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                    >
+                      View on GitHub
+                    </Link>
                   </div>
                   {siteMetadata.comments && (
                     <div
@@ -73,26 +78,27 @@ export default function PostLayout({ content, next, prev, children, toc }: Layou
                 </div>
               </div>
               <footer>
-                <div className="flex flex-col gap-4 text-sm font-medium sm:flex-row sm:justify-between sm:text-base">
-                  {prev && prev.path && (
-                    <div className="pt-4 xl:pt-8">
+                <div className="flex flex-col gap-1 text-sm  sm:text-base">
+                  {next && next.path && (
+                    <div className="pt-3">
                       <Link
-                        href={`/${prev.path}`}
-                        className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                        aria-label={`Previous post: ${prev.title}`}
+                        href={`/${next.path}`}
+                        className="text-gray-700 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                        aria-label={`Next post: ${next.title}`}
                       >
-                        下一篇:{prev.title}
+                        下一篇：{next.title};
                       </Link>
                     </div>
                   )}
-                  {next && next.path && (
-                    <div className="pt-4 xl:pt-8">
+
+                  {prev && prev.path && (
+                    <div className="">
                       <Link
-                        href={`/${next.path}`}
-                        className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                        aria-label={`Next post: ${next.title}`}
+                        href={`/${prev.path}`}
+                        className="text-gray-700 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                        aria-label={`Previous post: ${prev.title}`}
                       >
-                        上一篇:{next.title};
+                        上一篇：{prev.title}
                       </Link>
                     </div>
                   )}

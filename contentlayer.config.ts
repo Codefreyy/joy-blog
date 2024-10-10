@@ -4,23 +4,26 @@ import readingTime from 'reading-time'
 import { slug } from 'github-slugger'
 import path from 'path'
 import { fromHtmlIsomorphic } from 'hast-util-from-html-isomorphic'
+
 // Remark packages
-import remarkGfm from 'remark-gfm'
-import remarkMath from 'remark-math'
-import { remarkAlert } from 'remark-github-blockquote-alert'
+
+// import { remarkAlert } from 'remark-github-blockquote-alert'
 import {
   remarkExtractFrontmatter,
   remarkCodeTitles,
   remarkImgToJsx,
   extractTocHeadings,
 } from 'pliny/mdx-plugins/index.js'
-// Rehype packages
-import rehypeSlug from 'rehype-slug'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeKatex from 'rehype-katex'
 import rehypeCitation from 'rehype-citation'
 import rehypePrismPlus from 'rehype-prism-plus'
 import rehypePresetMinify from 'rehype-preset-minify'
+
+import rehypeSlug from 'rehype-slug'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+
 import siteMetadata from './data/siteMetadata'
 import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer.js'
 
@@ -155,7 +158,7 @@ export default makeSource({
       remarkCodeTitles,
       remarkMath,
       remarkImgToJsx,
-      remarkAlert,
+      // remarkAlert,
     ],
     rehypePlugins: [
       rehypeSlug,
@@ -169,6 +172,16 @@ export default makeSource({
           content: icon,
         },
       ],
+      // [
+      //   rehypeAutolinkHeadings,
+      //   {
+      //     behavior: 'prepend',
+      //     headingProperties: {
+      //       className: ['content-header'],
+      //     },
+      //     content: icon,
+      //   },
+      // ],
       rehypeKatex,
       [rehypeCitation, { path: path.join(root, 'data') }],
       [rehypePrismPlus, { defaultLanguage: 'js', ignoreMissing: true }],

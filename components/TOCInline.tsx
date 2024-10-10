@@ -75,28 +75,45 @@ const TOCInline = ({
 
   const handleScroll = () => {
     const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
-    const scrollPosition = window.scrollY || document.documentElement.scrollTop
+    // const scrollPosition = window.scrollY || document.documentElement.scrollTop
 
     let currentId = ''
-    headings.forEach((heading) => {
+    headings.forEach((heading, index) => {
       const id = heading.getAttribute('id')
       if (id) {
         const rect = heading.getBoundingClientRect()
-        if (rect.top + window.scrollY - 20 <= scrollPosition) {
+        if (index === 1 && rect.top <= 350) {
+          currentId = id
+        } else if (rect.top <= 200) {
           currentId = id
         }
       }
     })
-    console.log(currentId)
+
     setActiveId(currentId)
   }
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll)
+    handleScroll()
     return () => {
       window.removeEventListener('scroll', handleScroll)
     }
   }, [])
+
+  const handleClick = (event, headingId) => {
+    event.preventDefault() // Prevent the default anchor link behavior
+    handleScrollToHeading(headingId)
+  }
+
+  const handleScrollToHeading = (headingId) => {
+    const headingElement = document.getElementById(headingId)
+    if (headingElement) {
+      const offset = 20
+      const scrollY = headingElement.getBoundingClientRect().top + window.pageYOffset - offset
+      window.scrollTo({ top: scrollY, behavior: 'smooth' })
+    }
+  }
 
   const createList = (items: NestedTocItem[] | undefined, level = 0) => {
     if (!items || items.length === 0) {
@@ -111,16 +128,16 @@ const TOCInline = ({
       >
         {items.map((item, index) => (
           <li key={index} className={liClassName}>
-            <a
-              href={item.url}
-              className={cn(
+            <button
+              onClick={(event) => handleClick(event, item.url.substring(1, item.url.length))}
+              className={`${cn(
                 'mb-1 inline-block',
                 (item.url.substring(1, item.url.length) === activeId || item.active) &&
                   'active-header'
-              )}
+              )} cursor-pointer hover:opacity-80`}
             >
               {item.value}
-            </a>
+            </button>
             {createList(item.children, level + 1)}
           </li>
         ))}
