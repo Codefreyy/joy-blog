@@ -9,6 +9,8 @@ tags: ['JavaScript']
 
 draft: false
 
+layout: 'PostSimple'
+
 summary: '这篇文章将会讨论为什么计算机在做最简单的数学题时会出现错误，例如0.1 + 0.2 != 0.3。文章涉及IEEE 754标准，浮点数的二进制表示，以及如何解决这个问题等。'
 ---
 
@@ -30,8 +32,6 @@ function addScore() {
 
 一个简单的回答是：计算机使用的格式（binary-floating-point）不能准确地表示 `0.1` 或 `0.2`，当代码被编译或解释时，`0.1`是四舍五入到该格式中最接近的数字。
 事实上，这不是`JavaScript`的问题，而是所有使用`IEEE 754`浮点数标准的编程语言都会遇到的问题。
-
-<TOCInline toc={props.toc} exclude="Introduction" />
 
 ## `IEEE 754`标准
 

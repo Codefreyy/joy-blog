@@ -20,9 +20,6 @@ const layouts = {
   PostLayout,
   PostBanner,
 }
-function removeNumericSuffix(url) {
-  return url.replace(/-\d+$/, '')
-}
 
 export async function generateMetadata({
   params,
@@ -95,12 +92,6 @@ export default async function Page({ params }: { params: { slug: string[] } }) {
   const prev = sortedCoreContents[postIndex + 1]
   const next = sortedCoreContents[postIndex - 1]
   const post = allBlogs.find((p) => p.slug === slug) as Blog
-  const updatedToc = Array.isArray(post?.toc)
-    ? post?.toc.map((item) => ({
-        ...item,
-        url: removeNumericSuffix(item.url),
-      }))
-    : []
   const authorList = post?.authors || ['default']
   const authorDetails = authorList.map((author) => {
     const authorResults = allAuthors.find((p) => p.slug === author)
@@ -128,9 +119,9 @@ export default async function Page({ params }: { params: { slug: string[] } }) {
         authorDetails={authorDetails}
         next={next}
         prev={prev}
-        toc={updatedToc}
+        toc={post.toc}
       >
-        <MDXLayoutRenderer code={post.body.code} components={components} toc={updatedToc} />
+        <MDXLayoutRenderer code={post.body.code} components={components} toc={post.toc} />
       </Layout>
     </>
   )

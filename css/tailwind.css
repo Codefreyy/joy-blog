@@ -53,12 +53,13 @@ input:-webkit-autofill:focus {
 @layer components {
   /* Table of Contents styling */
   .toc {
-    @apply sticky top-16 hidden h-0 break-words text-sm xl:block;
+    @apply sticky top-16 hidden h-0 w-[calc(50vw-50%-4em)] break-words text-xs xl:block;
+    transform: translateX(calc(-100% - 2em)) translateY(2em);
   }
 
   /* Right-aligned TOC */
   .tocr {
-    @apply sticky top-16 ml-auto hidden h-0 w-[calc(50vw-50%-4em)] break-words text-right text-sm xl:block;
+    @apply sticky top-16 ml-auto hidden h-0 w-[calc(50vw-50%-4em)] break-words text-left text-sm xl:block;
     transform: translateX(calc(100% + 2em)) translateY(2em);
   }
 

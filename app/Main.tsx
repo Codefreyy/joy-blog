@@ -14,7 +14,7 @@ export default function Home({ posts }) {
       <Link
         href={'https://joy-peng-portfolio.vercel.app'}
         target="_blank"
-        className=" animate-bounce text-gray-500 underline underline-offset-2 hover:text-gray-400 hover:no-underline"
+        className=" animate-bounce text-gray-500 underline underline-offset-2 hover:text-gray-400 hover:no-underline dark:text-gray-400 dark:hover:text-gray-300"
       >
         Portfolio传送门
       </Link>

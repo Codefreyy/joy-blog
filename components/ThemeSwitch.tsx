@@ -49,13 +49,27 @@ const ThemeSwitch = () => {
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme, resolvedTheme } = useTheme()
 
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+
+    const preElements = document.querySelectorAll('pre')
+    preElements.forEach((pre) => {
+      if (newTheme === 'dark') {
+        pre.classList.add('dark')
+      } else {
+        pre.classList.remove('dark')
+      }
+    })
+  }
+
   // When mounted on client, now we can show the UI
   useEffect(() => setMounted(true), [])
 
   return (
     <div className="mr-5">
       <Menu as="div" className="relative inline-block text-left">
-        <Menu.Button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+        <Menu.Button onClick={toggleTheme}>
           {resolvedTheme === 'dark' ? <Moon /> : <Sun />}
         </Menu.Button>
         {/* <Transition
