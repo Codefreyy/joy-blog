@@ -58,8 +58,8 @@ const TOCInline = ({
   asDisclosure = false,
   exclude = '',
   collapse = true,
-  ulClassName = ' ',
-  liClassName = 'truncate',
+  ulClassName = '',
+  liClassName = '',
   rightAlign = false,
 }: TOCInlineProps) => {
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -134,7 +134,7 @@ const TOCInline = ({
                 'mb-1 inline-block',
                 (item.url.substring(1, item.url.length) === activeId || item.active) &&
                   'active-header'
-              )} cursor-pointer hover:opacity-80`}
+              )} max-w-60 cursor-pointer  truncate hover:opacity-80`}
             >
               {item.value}
             </button>

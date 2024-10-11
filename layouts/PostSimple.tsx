@@ -54,7 +54,7 @@ export default function PostLayout({ content, next, prev, children, toc }: Layou
           <div className="flex flex-col gap-5 md:container md:mx-auto xl:flex-row">
             <div className="grid-rows-[auto_1fr]  pb-8 dark:divide-muted ">
               <div className="xl:col-span-3 xl:row-span-2 xl:pb-0">
-                <div className="prose  prose-sm pb-8 dark:prose-invert  xl:prose-base">
+                <div className="prose  prose-sm pb-8 dark:prose-invert  lg:prose-base">
                   <div>{children}</div>
                 </div>
                 <div>

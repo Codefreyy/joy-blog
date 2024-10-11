@@ -1,0 +1,219 @@
+---
+title: 'useEffectEvent Hook如何解决useEffect中的闭包问题'
+
+date: '2024-10-11'
+
+lastmod: '2024-10-11'
+
+tags: ['react']
+
+draft: false
+
+layout: 'PostSimple'
+
+summary: '通过聊天室场景介绍引入useEffectHook要解决的问题'
+---
+
+### 引入
+
+假设有这样一个聊天室组件，我们希望可以在每次roomId改变的时候，断开之前的连接，重新连接到新的房间。如下代码所示：
+
+```javascript
+import { useEffect } from 'react'
+
+// eslint-disable-next-line react/prop-types
+const ChatRoom = ({ roomId, logginOptions }) => {
+  const connect = (roomId) => {
+    console.log('connect', roomId, logginOptions)
+  }
+
+  useEffect(() => {
+    const room = connectToRoom(roomId)
+    room.onConnected(() => {
+      connect(roomId)
+    })
+
+    return () => {
+      room.disconnect()
+    }
+  }, [roomId])
+
+  return null
+}
+
+const App = () => {
+  return <ChatRoom roomId="https://example.com/chat" logginOptions={{ user: 'JohnDoe' }} />
+}
+
+function connectToRoom(roomId) {
+  return {
+    onConnected: (callback) => {
+      console.log(roomId)
+      setTimeout(callback, 1000)
+    },
+    disconnect: () => {
+      console.log('Disconnected from room')
+    },
+  }
+}
+
+export default App
+```
+
+此时`eslint`会提示依赖项缺少`connect`函数，
+
+```bash
+React Hook useEffect has a missing dependency: 'connect'. Either include it or remove the dependency array.eslintreact-hooks/exhaustive-deps
+```
+
+但如果把`connect`及加上，它又会提示`connect`函数每次使得`useEffect`在每次渲染的时候都会跑一遍。因为`connect`属于组件内部（且在`useEffect`外）的代码，每次重新渲染就会重新创建`connect`，而它作为`useEffect`的依赖项就会触发`useEffect`的函数。
+
+```bash
+The 'connect' function makes the dependencies of useEffect Hook (at line 20) change on every render. Move it inside the useEffect callback. Alternatively, wrap the definition of 'connect' in its own useCallback() Hook.
+```
+
+提示给出了两种解决办法
+
+- Move it inside the useEffect callback.
+- Wrap the definition of 'connect' in its own useCallback() Hook.
+
+结论先行，这两种方法都行不通。
+
+#### 方法1：把函数移进`useEffect`的回调函数里
+
+这样我们就可以把`connect`从依赖数组中移除了
+
+```javascript
+const ChatRoom = ({ roomId, logginOptions }) => {
+  useEffect(() => {
+    const connect = (roomId) => {
+      console.log('connect', roomId, logginOptions)
+    }
+
+    const room = connectToRoom(roomId)
+    room.onConnected(() => {
+      connect(roomId)
+    })
+
+    return () => {
+      room.disconnect()
+    }
+  }, [roomId])
+
+  return null
+}
+```
+
+但是有另一个提示`React Hook useEffect has a missing dependency: 'logginOptions'. `，需要把`logginOptions`放入依赖数组，因为如果不加的话，`useEffect`永远只会记住组件初始化时的`logginOptions`。这就是`useEffect`的闭包问题，我在[这个视频](https://www.bilibili.com/video/BV114xceeECj/?spm_id_from=333.337.search-card.all.click&vd_source=df5b58e116cad75d6d81a2ef180dbe23)里有详细讲解。
+
+如果放进去的话就违背了我们的初衷，我们只希望在roomId发生改变时重新连接，其他选项例如切换主题，改变聊天室的布局等操作不应该导致聊天室重新连接（稳定性很重要！）
+
+#### 方法2：用`useCallback`包裹函数
+
+这样的话我们还是需要给`useCallback`函数加上`logginOptions`的依赖项，当`logginOptions`发生改变时，`connect`函数会重新创建，地址发生改变，`useEffect`的callback还是会重新执行。
+
+```javascript
+const ChatRoom = ({ roomId, logginOptions }) => {
+  const connect = useCallback(
+    (roomId) => {
+      console.log('connect', roomId, logginOptions)
+    },
+    [logginOptions]
+  )
+
+  useEffect(() => {
+    const room = connectToRoom(roomId)
+    room.onConnected(() => {
+      connect(roomId)
+    })
+
+    return () => {
+      room.disconnect()
+    }
+  }, [roomId, connect])
+
+  return null
+}
+```
+
+### 复杂的解决方法
+
+像我在[useEffect的闭包陷阱](https://www.bilibili.com/video/BV114xceeECj/?spm_id_from=333.337.search-card.all.click&vd_source=df5b58e116cad75d6d81a2ef180dbe23)这个视频里提到的，可以用`useRef`和另一个`useEffect`来“复杂”地解决这个问题。
+
+```javascript
+const ChatRoom = ({ roomId, logginOptions }) => {
+  // 声明一个logginOptionsRef
+  const logginOptionsRef = useRef(logginOptions)
+
+  //每次logginOptions改变的时候我去修改它的current值
+  useEffect(() => {
+    logginOptionsRef.current = logginOptions
+  }, [logginOptions])
+
+  const connect = (roomId) => {
+    // 每次roomId，再次connect的时候我就能通过logginOptionsRef获取到最新值
+    console.log('connect', roomId, logginOptionsRef.current)
+  }
+
+  useEffect(() => {
+    const room = connectToRoom(roomId)
+    room.onConnected(() => {
+      connect(roomId)
+    })
+    return () => {
+      room.disconnect()
+    }
+  }, [roomId])
+
+  return null
+}
+```
+
+这样有连接房间逻辑的`useEffect`就不用依赖`logginOptions`了，`logginOptions`值的更新由另外一个`useEffect`来handle。
+
+问题在于，这样的代码不管是写的时候花的功夫还是可读性可维护性方面都很差。我们来看看用`useEffectEvent`是怎么相对优雅地解决这个问题。
+
+### 相对优雅的useEffectEvent
+
+把`connect`函数提出来用`useEffectEvent`包裹住，就能实现我们想要的效果：
+
+**_既能够获取最新的状态，又不会触发不必要的重新渲染_**
+
+当 `roomId` 改变时，`useEffect` 的回调函数会重新执行，但在回调中使用的 `connect` 函数始终能够获取到最新的 `logginOptions`。
+
+而当 `logginOptions` 改变时，由于它不是 `useEffect` 的依赖项，不会导致 `useEffect` 的回调重新执行，但 `connect` 内部却可以正确地使用到最新的 `logginOptions`，从而避免了重新连接或其他不必要的操作。这样就达到了既能响应 `roomId` 的变化，又能保持对最新的 `logginOptions` 的访问的效果。
+
+### 自定义一个useEffectEvent
+
+```javascript
+export function useEffectEvent<TCallback extends AnyFunction>(callback: TCallback): TCallback {
+    // 初始化一个引用来保存最新的回调函数
+    const latestRef = useRef<TCallback> (useEvent_shouldNotBeInvokedBeforeMount as any);
+
+   // 持续追踪最新的回调函数，但是使用useLayoutEffect确保更新在渲染阶段之后同步发生，确保latestRef始终指向最新的回调。
+    useLayoutEffect(() => {
+        latestRef.current = callback;
+    }, [callback]);
+
+  	// 使用stableRef创建稳定函数
+    const stableRef = useRef<TCallback>(null as any);
+    if (!stableRef.current) {
+      // 这个稳定的函数总是保存atestRef中存储的任何函数
+        stableRef.current = function (...args) {
+            latestRef.current?.(...args);
+        } as TCallback;
+    }
+
+    return stableRef.current;
+}
+```
+
+每次我返回的是stableRef.current的时候就会调用一下这个函数获取最新的ref值，但是返回的引用地址不变。
+
+```javascript
+function (...args) {
+            latestRef.current?.(...args);
+        }
+```
+
+虽然这个自定义的函数并不是官方的实现，但核心思想是类似的。
