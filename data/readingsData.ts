@@ -50,6 +50,12 @@ const readingsData = {
       href: 'https://www.udemy.com/course/understanding-nodejs-core-concepts/',
     },
   ],
+  Git: [
+    {
+      title: 'Git In-depth - Frontend Masters',
+      href: 'https://frontendmasters.com/courses/git-in-depth/',
+    },
+  ],
   其他: [
     {
       title: '我看过的Youtube高质量视频',

@@ -29,7 +29,7 @@ function ReadingSection({ readingsData }) {
             <ol className="mt-5 space-y-2">
               {readingsData[key].map((item, index) => {
                 return (
-                  <li key={item.title}>
+                  <li key={item.title} className="text-gray-900 dark:text-gray-300">
                     <a
                       href={item.href}
                       target="_blank"
