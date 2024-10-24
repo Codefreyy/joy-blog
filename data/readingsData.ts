@@ -8,6 +8,16 @@ const readingsData = {
     { title: '你不知道的JavaScript（上卷）', status: 'done' },
     { title: '你不知道的JavaScript（中卷）', status: 'done' },
   ],
+  框架: [
+    {
+      title: 'Build a frontend framework (from scratch)',
+      href: 'https://github.com/angelsolaorbaiceta/fe-fwk-book',
+    },
+    {
+      title: 'Vanilla JS: You Might Not Need a Framework',
+      href: 'https://frontendmasters.com/courses/vanilla-js-apps/',
+    },
+  ],
   性能优化: [
     {
       title: 'JavaScript Performance - Frontend Masters',

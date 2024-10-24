@@ -31,7 +31,7 @@ export default function Home({ posts }) {
             const { slug, date, title, summary, tags } = post
             return (
               <Link key={slug} href={`/blog/${slug}`}>
-                <li className="transform cursor-pointer rounded-lg px-5 py-8 transition-transform hover:scale-101 hover:bg-[#f3f0ec] dark:hover:bg-[#2b2e40]">
+                <li className="transform cursor-pointer rounded-lg px-5 py-8 transition-transform hover:scale-101 hover:bg-[#fcfbfa] dark:hover:bg-[#2b2e40]">
                   <article>
                     <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
                       <dl>

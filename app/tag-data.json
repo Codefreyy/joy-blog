@@ -1,1 +1,19 @@
-{"react":2,"算法":4,"数据结构":2,"v8":2,"性能优化":4,"javascript":10,"手撕":2,"浏览器":3,"flexbox":1,"css":3,"typescript":1,"操作系统":1,"authentication":2,"security":2,"非技术":2,"动态规划":2,"tailwindcss":1}
+{
+  "css": 3,
+  "算法": 4,
+  "动态规划": 2,
+  "性能优化": 4,
+  "javascript": 10,
+  "authentication": 2,
+  "security": 2,
+  "数据结构": 2,
+  "浏览器": 3,
+  "react": 2,
+  "v8": 2,
+  "typescript": 1,
+  "tailwindcss": 1,
+  "非技术": 2,
+  "flexbox": 1,
+  "手撕": 2,
+  "操作系统": 1
+}
