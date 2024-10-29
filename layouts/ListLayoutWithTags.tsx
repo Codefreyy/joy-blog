@@ -84,7 +84,7 @@ export default function ListLayoutWithTags({
           </h1>
         </div>
         <div className="flex sm:space-x-24">
-          <div className="hidden h-full max-h-screen min-w-[280px] max-w-[280px] flex-wrap overflow-auto rounded bg-[#f3f0ec] pt-5 shadow-md dark:bg-[#2c2e3f] dark:shadow-gray-800/40 sm:flex">
+          <div className="hidden h-full max-h-screen min-w-[280px] max-w-[280px] flex-wrap overflow-auto rounded bg-[#fcfbfa] pt-5 shadow-md dark:bg-[#2c2e3f] dark:shadow-gray-800/40 sm:flex">
             <div className="px-6 py-4">
               {pathname.startsWith('/blog') ? (
                 <h3 className="font-bold uppercase text-primary-500">All Posts</h3>
@@ -125,7 +125,7 @@ export default function ListLayoutWithTags({
                 const { path, date, title, summary, tags } = post
                 return (
                   <Link href={`/${path}`} key={path}>
-                    <li className="transform cursor-pointer rounded-lg px-5 py-8 transition-transform hover:scale-101 hover:bg-[#f3f0ec] dark:hover:bg-[#2b2e40]">
+                    <li className="transform cursor-pointer rounded-lg px-5 py-8 transition-transform hover:scale-101 hover:bg-[#fcfbfa] dark:hover:bg-[#2b2e40]">
                       <article className="flex flex-col space-y-2 xl:space-y-0">
                         <dl>
                           <dt className="sr-only">Published on</dt>

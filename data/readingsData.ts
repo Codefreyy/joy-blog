@@ -65,6 +65,10 @@ const readingsData = {
       title: 'Git In-depth - Frontend Masters',
       href: 'https://frontendmasters.com/courses/git-in-depth/',
     },
+    {
+      title: 'Everything you need to know about Git - Frontend Masters',
+      href: 'https://frontendmasters.com/courses/everything-git/',
+    },
   ],
   其他: [
     {
