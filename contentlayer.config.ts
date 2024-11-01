@@ -58,6 +58,10 @@ const computedFields: ComputedFields = {
     resolve: (doc) => doc._raw.sourceFilePath,
   },
   toc: { type: 'string', resolve: (doc) => extractTocHeadings(doc.body.raw) },
+  year: {
+    type: 'number',
+    resolve: (doc) => new Date(doc.date).getFullYear(),
+  },
 }
 
 /**
@@ -78,6 +82,21 @@ function createTagCount(allBlogs) {
     }
   })
   writeFileSync('./app/tag-data.json', JSON.stringify(tagCount))
+}
+
+function createYearCount(allBlogs) {
+  const yearCount: Record<string, number> = {}
+  allBlogs.forEach((file) => {
+    const fileYear = new Date(file.date).getFullYear().toString()
+    if (fileYear in yearCount) {
+      yearCount[fileYear]++
+    } else {
+      yearCount[fileYear] = 1
+    }
+    console.log('year', yearCount)
+  })
+
+  writeFileSync('./app/year-data.json', JSON.stringify(yearCount))
 }
 
 function createSearchIndex(allBlogs) {
@@ -191,6 +210,7 @@ export default makeSource({
   onSuccess: async (importData) => {
     const { allBlogs } = await importData()
     createTagCount(allBlogs)
+    createYearCount(allBlogs)
     createSearchIndex(allBlogs)
   },
 })

@@ -10,6 +10,7 @@ import Link from '@/components/Link'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import tagData from 'app/tag-data.json'
+import { useState } from 'react'
 
 interface PaginationProps {
   totalPages: number
@@ -72,14 +73,13 @@ export default function ListLayoutWithTags({
   const tagCounts = tagData as Record<string, number>
   const tagKeys = Object.keys(tagCounts)
   const sortedTags = tagKeys.sort((a, b) => tagCounts[b] - tagCounts[a])
-
   const displayPosts = initialDisplayPosts.length > 0 ? initialDisplayPosts : posts
-
+  console.log(pathname.split('/archive/')[1])
   return (
     <>
       <div>
         <div className="pb-6 pt-6">
-          <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:hidden sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
+          <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 hover:text-primary-400 dark:text-gray-100 sm:hidden sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
             {title}
           </h1>
         </div>
@@ -100,14 +100,14 @@ export default function ListLayoutWithTags({
                 {sortedTags.map((t) => {
                   return (
                     <li key={t} className="my-3 ">
-                      {pathname.split('/tags/')[1] === slug(t) ? (
+                      {pathname.split('/archive/')[1] === slug(t) ? (
                         <h3 className="inline px-3 py-2 text-sm font-bold uppercase text-primary-500">
                           {`${t} (${tagCounts[t]})`}
                         </h3>
                       ) : (
                         <Link
-                          href={`/tags/${slug(t)}`}
-                          className="px-3 py-2 text-sm font-medium uppercase text-gray-500 hover:text-primary-500 dark:text-gray-300 dark:hover:text-primary-500"
+                          href={`/archive/${slug(t)}`}
+                          className={` px-3 py-2 text-sm font-medium uppercase text-gray-500 hover:text-primary-500 dark:text-gray-300 dark:hover:text-primary-500`}
                           aria-label={`View posts tagged ${t}`}
                         >
                           {`${t} (${tagCounts[t]})`}
@@ -125,25 +125,23 @@ export default function ListLayoutWithTags({
                 const { path, date, title, summary, tags } = post
                 return (
                   <Link href={`/${path}`} key={path}>
-                    <li className="transform cursor-pointer rounded-lg px-5 py-8 transition-transform hover:scale-101 hover:bg-[#fcfbfa] dark:hover:bg-[#2b2e40]">
-                      <article className="flex flex-col space-y-2 xl:space-y-0">
-                        <dl>
-                          <dt className="sr-only">Published on</dt>
-                          <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                            <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
-                          </dd>
-                        </dl>
-                        <div className="space-y-3">
-                          <div>
-                            <h2 className="text-xl font-bold leading-8 tracking-tight">
-                              <Link href={`/${path}`} className="text-gray-900 dark:text-gray-100">
-                                {title}
-                              </Link>
-                            </h2>
-                            <div className="flex flex-wrap">
-                              {tags?.map((tag) => <Tag key={tag} text={tag} />)}
-                            </div>
-                          </div>
+                    <li className=" transform cursor-pointer rounded-lg px-5 py-8 transition-transform hover:scale-101 hover:bg-[#fcfbfa] dark:hover:bg-[#2b2e40]">
+                      <article className="group flex flex-col space-y-1 xl:space-y-0">
+                        <div>
+                          <h2 className="text-xl font-bold leading-8 tracking-tight">
+                            <Link
+                              href={`/${path}`}
+                              className="text-gray-900 group-hover:text-primary-500 dark:text-gray-100"
+                            >
+                              {title}
+                            </Link>
+                          </h2>
+                          <dl>
+                            <dt className="sr-only">Published on</dt>
+                            <dd className="text-sm font-medium leading-6 text-gray-500 dark:text-gray-400">
+                              <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                            </dd>
+                          </dl>
                           <div className="prose max-w-none text-gray-500 dark:text-gray-400">
                             {summary}
                           </div>

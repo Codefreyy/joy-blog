@@ -3,6 +3,7 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import NewsletterForm from 'pliny/ui/NewsletterForm'
+import SocialIcon from '@/components/social-icons'
 
 const MAX_DISPLAY = 5
 
@@ -19,40 +20,35 @@ export default function Home({ posts }) {
         Portfolio传送门
       </Link>
 
-      <div>
-        <div className="space-y-2  pt-6 md:space-y-5">
-          <h1 className="text-2xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-2xl sm:leading-10 md:text-3xl md:leading-14">
-            Latest
-          </h1>
-        </div>
+      <div className="my-3 flex space-x-2">
+        <SocialIcon kind="mail" href={`mailto:${siteMetadata.email}`} size={5} />
+        <SocialIcon kind="github" href={siteMetadata.github} size={5} />
+        <SocialIcon kind="linkedin" href={siteMetadata.linkedin} size={5} />
+        <SocialIcon kind="bilibili" href={siteMetadata.bilibili} size={5} />
+      </div>
+
+      <div className="mt-3">
         <ul>
           {!posts.length && 'No posts found.'}
           {posts.slice(0, MAX_DISPLAY).map((post) => {
             const { slug, date, title, summary, tags } = post
             return (
               <Link key={slug} href={`/blog/${slug}`}>
-                <li className="transform cursor-pointer rounded-lg px-5 py-8 transition-transform hover:scale-101 hover:bg-[#fcfbfa] dark:hover:bg-[#2b2e40]">
-                  <article>
-                    <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
-                      <dl>
-                        <dt className="sr-only">Published on</dt>
-                        <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                          <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
-                        </dd>
-                      </dl>
-                      <div className="space-y-5 xl:col-span-3">
-                        <div className="space-y-6">
-                          <div>
-                            <h2 className="text-xl font-bold leading-8 tracking-tight">{title}</h2>
-                            <div className="flex flex-wrap">
-                              {tags.map((tag) => (
-                                <Tag key={tag} text={tag} />
-                              ))}
-                            </div>
-                          </div>
-                          <div className="prose max-w-none text-gray-500 dark:text-gray-400">
-                            {summary}
-                          </div>
+                <li className="transform cursor-pointer   transition-transform hover:scale-101 hover:bg-[#fcfbfa] dark:hover:bg-[#2b2e40]">
+                  <article className="group">
+                    <div className="mb-1 space-y-5 rounded-lg px-3 py-5  xl:col-span-3">
+                      <div>
+                        <h2 className="text-xl font-bold leading-8 tracking-tight group-hover:text-primary-500">
+                          {title}
+                        </h2>
+                        <dl>
+                          <dt className="sr-only">Published on</dt>
+                          <dd className="text-sm font-medium leading-6 text-gray-500 dark:text-gray-400">
+                            <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                          </dd>
+                        </dl>
+                        <div className="prose-sm max-w-none text-gray-500 dark:text-gray-400">
+                          {summary}
                         </div>
                       </div>
                     </div>
@@ -70,7 +66,7 @@ export default function Home({ posts }) {
             className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
             aria-label="All posts"
           >
-            All Posts &rarr;
+            查看全部 &rarr;
           </Link>
         </div>
       )}
