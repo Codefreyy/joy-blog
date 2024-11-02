@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { slug } from 'github-slugger'
 interface Props {
   text: string
-  type: string
+  type?: string
 }
 
 const Tag = ({ text, type = 'archive' }: Props) => {
