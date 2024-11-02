@@ -3,15 +3,23 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import NewsletterForm from 'pliny/ui/NewsletterForm'
-import SocialIcon from '@/components/social-icons'
+import Image from 'next/image'
 
 const MAX_DISPLAY = 5
 
 export default function Home({ posts }) {
   return (
     <>
-      <div>欢迎来到我的博客小屋！上茶！</div>
-
+      <div className="flex items-center">
+        <span> 欢迎来到我的博客小屋！上茶！ </span>
+        <Image
+          src="/static/favicons/tea.gif"
+          className="mt-[-5px]"
+          width={30}
+          height={30}
+          alt="tea-cup"
+        />
+      </div>
       <Link
         href={'https://joy-peng-portfolio.vercel.app'}
         target="_blank"
@@ -20,12 +28,7 @@ export default function Home({ posts }) {
         Portfolio传送门
       </Link>
 
-      <div className="my-3 flex space-x-2">
-        <SocialIcon kind="mail" href={`mailto:${siteMetadata.email}`} size={5} />
-        <SocialIcon kind="github" href={siteMetadata.github} size={5} />
-        <SocialIcon kind="linkedin" href={siteMetadata.linkedin} size={5} />
-        <SocialIcon kind="bilibili" href={siteMetadata.bilibili} size={5} />
-      </div>
+      <h2 className="mt-10 text-xl font-extrabold">最近文章</h2>
 
       <div className="mt-3">
         <ul>

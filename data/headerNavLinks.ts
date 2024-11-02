@@ -1,9 +1,8 @@
 const headerNavLinks = [
   { href: '/', title: 'Home' },
-  { href: '/blog', title: 'Blog' },
-  { href: '/archive', title: 'Archive' },
-  { href: '/resources', title: 'Resources' },
-  { href: '/about', title: 'About' },
+  { href: '/blog', title: '文章' },
+  { href: '/resources', title: '推荐' },
+  { href: '/about', title: '关于' },
 ]
 
 export default headerNavLinks

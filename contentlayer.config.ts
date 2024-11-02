@@ -93,7 +93,6 @@ function createYearCount(allBlogs) {
     } else {
       yearCount[fileYear] = 1
     }
-    console.log('year', yearCount)
   })
 
   writeFileSync('./app/year-data.json', JSON.stringify(yearCount))

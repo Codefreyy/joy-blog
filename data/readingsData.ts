@@ -44,6 +44,12 @@ const readingsData = {
       href: 'https://juejin.cn/book/6844733790204461070?enter_from=course_center',
     },
   ],
+  前端工程化: [
+    {
+      title: '深入浅出Webpack',
+      href: 'https://jasonhsu9.github.io/dive-into-webpack/',
+    },
+  ],
   数据结构与算法: [
     {
       title: '前端算法与数据结构面试：底层逻辑解读与大厂真题训练',
