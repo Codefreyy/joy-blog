@@ -1,0 +1,197 @@
+---
+title: '深入JavaScript类型转换'
+
+date: '2024-11-12'
+
+lastmod: '2024-11-12'
+
+tags: ['JavaScript']
+
+draft: false
+
+layout: 'PostSimple'
+
+summary: '为了更好了解我们使用的语言，以提高代码的健壮性，了解类型转换机制是十分有必要的。'
+---
+
+#### 引入
+
+类型转换是JS开发过程中基本上无法避免的事情，很多代码在运行的时候会自动进行类型转换，你可能都没意识到。比如在下面这个例子中`numStudent`就被转化为了字符串类型：
+
+```javascript
+var numStudents = 16
+console.log(`There are ${numStudents} students`)
+```
+
+再比如`'hello'.length` ，`hello`明明是个字符串类型，怎么就可以访问`length`属性呢？这过程中也发生了类型转换，字符串被临时“装箱”为对象。
+
+为了更好了解我们使用的语言，以提高代码的健壮性，了解类型转换机制是十分有必要的。在[ECMAScript文档](https://tc39.es/ecma262/#sec-toprimitive)里提到它定义了一系列抽象操作来完成转换。
+
+#### ToPrimitive
+
+```javascript
+ToPrimitive(hint)
+```
+
+ToPrimitive 是一个抽象操作，用于将非原始类型（如对象、数组等）转换为原始类型（`string`、`number` 或 `boolean`）。当我们需要将非原始类型转换为原始类型时，JavaScript 会自动调用 `ToPrimitive` 操作。可以提供一个 `hint` 参数（`string` 或 `number`），用来指示优先转换的目标类型。没有提供 `hint` 时，默认使用 `number` 作为提示。
+
+`hint`取决于JS需要将对象转换为原始值时的场景或目的，比如`String(obj)`明显会给一个`string`hint，数值运算`hint`会被设置为`number`。
+
+(1) hint is a `string`
+
+- 先`toString() `，如果不返回原始值
+
+- 则`valueOf()`
+
+(2) hint is a `number`
+
+- 先`valueOf()`，如果不返回原始值
+
+- 则`toString() `
+
+(3 )如果所有尝试均未返回原始值，将抛出 `TypeError` 异常。
+
+#### ToString
+
+`ToString` 操作用于将各种类型转换为字符串
+
+```
+null` 转换为 `"null"
+undefined` 转换为 `"undefined"
+true` 转换为 `"true"
+false` 转换为 `"false"
+3.14159` 转换为 `"3.14159"
+0` 和 `-0` 均转换为 `"0"
+```
+
+如果我们对一个obj调用`ToString(object)`那么它底层会调用`ToPrimitive(string)` ，也就是会先调用`toString()` 再`valueOf()`
+
+数组和对象的转换结果：
+
+```javascript
+[] 转换为 ""（空字符串）。
+[1, 2, 3] 转换为 "1,2,3"。
+[null, undefined] 转换为 ","。
+[[[],[],[]],[]] 转换为 ",,,"。
+[,,,,] 转化为",,,"
+{} 转换为 "[object Object]"。
+{ a: 2 } 转换为 "[object Object]"。
+{ toString() { return "X"; } } 转换为 "X"。
+```
+
+#### ToNumber
+
+`ToNumber` 用于将值转换为数值。对于基本类型：
+
+```javascript
+"" 转换为 0。
+"0" 转换为 0。
+"-0" 转换为 -0。
+" 009 "（包含空格的数字字符串）转换为 9。
+"3.14159" 转换为 3.14159。
+"0." 转换为 0。
+".0" 转换为 0。
+"."（单独的点）转换为 NaN。
+"0xaf"（十六进制字符串）转换为 175。
+false 转换为 0。
+true 转换为 1。
+null 转换为 0。
+undefined 转换为 NaN。
+```
+
+在 JavaScript 中，当对象需要转换为数字时（如调用 `Number(obj)`），会先执行 `ToPrimitive` 转换，将对象转换为原始类型。
+
+`ToPrimitive` 会根据数值提示（`hint` 为 `"number"`）优先调用 `valueOf()`，然后是 `toString()`，直到返回一个原始值。
+
+> 注意：引用类型调用`valueOf`的时候返回的是它自己。
+
+最终，`ToNumber` 再将该原始值转换为数值。
+
+一些例子：
+
+```javascript
+[""] 转换为 0
+["0"] 转换为 0
+["-0"] 转换为 -0
+[null] 转换为 0
+[undefined] 转换为 0
+[1,2,3] 转换为 NaN
+[[[[]]]] 转换为 0
+{} 转换为 NaN
+{ valueOf() { return 3; } } 转换为 3
+```
+
+#### ToBoolean
+
+当你需要做逻辑操作，而那个值不是`boolean`的时候，那么就会发生这个操作，它主要是一个查找工作。有一系列`falsy`值和`truthy`值，只要你在对应的表里面，就会返回`false`或`true`。
+
+以下是 `falsy` 和 `truthy` 值的列表：
+
+```javascript
+Falsy               Truthy
+""                  "foo"
+0, -0               23
+null                { a: 1 }
+NaN                 [1, 3]
+false               true
+undefined           function() {..}
+										...
+```
+
+问题？对空数组做`ToBoolean`会做什么？
+
+#### 装箱（Boxing）
+
+装箱指的是将原始类型包装为对象，例如在访问字符串或数字的属性时：
+
+```javascript
+if (studentElem.value.length > 50) {
+  console.log()
+}
+```
+
+在此例中，`studentElem.value` 是一个字符串，但它会被临时装箱为 `String` 对象以便访问 `length` 属性。
+
+#### 特殊情况
+
+```javascript
+Number('') // 0         OOPS!
+Number(' \t\n') // 0         OOPS!
+Number(null) // 0         OOPS!
+Number(undefined) // NaN       OOPS!
+Number([]) // 0         OOPS!
+Number([1, 2, 3]) // NaN       OOPS!
+Number([null]) // 0         OOPS!
+Number([undefined]) // 0         OOPS!
+Number({}) // NaN       OOPS!
+
+String(-0) // "0"       OOPS!
+String(null) // "null"    OOPS!
+String(undefined) // "undefined" OOPS!
+String([null]) // ""        OOPS!
+String([undefined]) // ""        OOPS!
+
+Boolean(new Boolean(false)) // true OOPS!
+
+// Second image
+
+Number(true) // 1
+Number(false) // 0
+1 < 2 // true
+2 < 3 // true
+1 < 2 < 3 // true (but...)
+1 < 2 < 3 // true
+true < 3 // true
+1 < 3 // true (hmm...)
+
+3 > 2 // true
+2 > 1 // true
+3 > 2 > 1 // false OOPS!
+3 > 2 > 1 // false
+true > 1 // false
+1 > 1 // false
+```
+
+#### 总结
+
+理解 JavaScript 的类型转换有助于避免代码中的意外行为。`ToPrimitive`、`ToString`、`ToNumber`、`ToBoolean` 和 `Boxing` 是 JavaScript 中的主要转换规则。掌握这些转换机制可以帮助你编写出更稳健和可维护的代码。
