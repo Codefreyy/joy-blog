@@ -86,7 +86,7 @@ export default function PostLayout({ content, next, prev, children, toc }: Layou
                         className="text-gray-700 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
                         aria-label={`Next post: ${next.title}`}
                       >
-                        下一篇：{next.title};
+                        后一篇：{next.title};
                       </Link>
                     </div>
                   )}
@@ -98,7 +98,7 @@ export default function PostLayout({ content, next, prev, children, toc }: Layou
                         className="text-gray-700 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
                         aria-label={`Previous post: ${prev.title}`}
                       >
-                        上一篇：{prev.title}
+                        前一篇：{prev.title}
                       </Link>
                     </div>
                   )}
