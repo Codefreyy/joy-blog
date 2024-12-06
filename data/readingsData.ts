@@ -37,17 +37,29 @@ const readingsData = {
       title: '浏览器工作原理与实践 - 极客时间',
       href: 'https://time.geekbang.org/column/intro/100033601',
     },
+    {
+      title: 'Inside look at modern web browser',
+      href: 'https://developer.chrome.com/blog/inside-browser-part1',
+    },
   ],
   设计模式: [
     {
       title: 'JavaScript 设计模式核心原理与应用实践 - 掘金',
       href: 'https://juejin.cn/book/6844733790204461070?enter_from=course_center',
     },
+    {
+      title: 'JavaScript 设计模式与开发实践 - 曾探',
+      href: 'https://juejin.cn/book/6844733800300150797?enter_from=course_center&utm_source=course_center',
+    },
   ],
   前端工程化: [
     {
       title: '深入浅出Webpack',
       href: 'https://jasonhsu9.github.io/dive-into-webpack/',
+    },
+    {
+      title: '「前端工程化」之 Webpack 原理与实践 - B站',
+      href: 'https://www.bilibili.com/video/BV1kP41177wp?spm_id_from=333.788.videopod.episodes&vd_source=df5b58e116cad75d6d81a2ef180dbe23',
     },
   ],
   数据结构与算法: [
@@ -65,6 +77,10 @@ const readingsData = {
       title: 'Understanding Node.js: Core Concepts - Udemy',
       href: 'https://www.udemy.com/course/understanding-nodejs-core-concepts/',
     },
+    {
+      title: '7天学会node.js',
+      href: 'http://nqdeng.github.io/7-days-nodejs/#1.3',
+    },
   ],
   Git: [
     {
@@ -79,7 +95,7 @@ const readingsData = {
   其他: [
     {
       title: '我看过的Youtube高质量视频',
-      href: 'https://www.youtube.com/playlist?list=PLtc4S9-a2fprxWMv_ZR0ggxJOdXAT_Gd5/',
+      href: 'https://www.youtube.com/playlist?list=PLtc4S9-a2fprxWMv_ZR0ggxJOdXAT_Gd5',
       status: 'done',
     },
     {
