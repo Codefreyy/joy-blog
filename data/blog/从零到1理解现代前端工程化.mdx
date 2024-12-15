@@ -1,0 +1,393 @@
+---
+title: '一文概览现代前端开发的核心工具和流程'
+
+date: '2024-12-15'
+
+lastmod: '2024-12-15'
+
+tags: ['工程化']
+
+draft: false
+
+layout: 'PostSimple'
+
+summary: '本文将带你从最简单的 HTML 和 JavaScript 文件出发，逐步演化到一个包含 Webpack 构建工具、Babel 转译器以及 React 脚手架的完整前端项目。通过这些步骤，你将逐步理解现代前端开发的核心工具和流程。'
+---
+
+### 引入
+
+在现代前端开发中，项目结构、模块化、构建工具和自动化流程是不可或缺的一部分。如果你刚刚入门前端开发，可能会感到这些概念有些复杂。本文将带你从最简单的 HTML 和 JavaScript 文件出发，逐步演化到一个包含 Webpack 构建工具、Babel 转译器以及 React 脚手架的完整前端项目。通过这些步骤，你将逐步理解现代前端开发的核心工具和流程。
+
+同时，我们也将探讨前端工程化学习的清晰路径，从“模块化”到“包管理器”、“构建工具”再到“脚手架”，帮助你建立前端开发的系统化知识框架。
+
+### 实践
+
+#### 步骤 1：创建最简单的前端项目
+
+让我们从一个基础的 HTML 文件开始，展示如何构建一个最简单的前端项目。
+
+**1.1 简单的 HTML + JavaScript 项目**
+
+首先，创建一个名为 index.html 的文件，并在其中添加一个简单的 JavaScript 脚本：
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Frontend Project</title>
+  </head>
+  <body>
+    <h1>My Simple Frontend Project</h1>
+    <div id="output"></div>
+
+    <script>
+      const message = 'Hello, Webpack!'
+      document.getElementById('output').innerHTML = message
+    </script>
+  </body>
+</html>
+```
+
+这个文件只包含一个 h1 标签和一个输出区域，通过 JavaScript 代码将消息显示在页面上。打开这个 HTML 文件，你将看到网页中显示 Hello, Webpack!。
+
+**1.2 运行这个项目**
+
+直接在浏览器中打开 index.html 文件，你会看到简单的输出结果。这是前端开发的最基础形式。
+
+#### 步骤 2：使用模块化拆分 JavaScript 代码
+
+随着项目的增长，代码逐渐变得复杂，单一文件的 JavaScript 变得不再可维护。现代前端开发中，我们使用模块化的方式来拆分代码，使得每个功能模块都有独立的文件。
+
+**2.1 拆分模块**
+
+创建两个文件，app.js 和 message.js，并将 JavaScript 代码拆分成模块。
+
+```javascript
+// message.js
+var message = ['Hello, world!', 'Goodbye, world!']
+
+// app.js
+var outputContent = document.getElementById('output')
+message.forEach((ms) => {
+  var mslineDom = document.createElement('p')
+  mslineDom.textContent = ms
+  outputContent.appendChild(mslineDom)
+})
+```
+
+**2.2 修改 HTML 文件**
+
+在 index.html 中，我们需要修改 `<script>` 标签，使用 `type="module"` 来引入模块化的 app.js：
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Frontend Project</title>
+  </head>
+  <body>
+    <h1>My Simple Frontend Project</h1>
+    <div id="output"></div>
+
+    <script src="./index.js"></script>
+    <script src="./message.js"></script>
+  </body>
+</html>
+```
+
+打开`index.html`后，发现什么都没有，因为两个js文件的引入顺序错了，导致在`index.js`里获取不到文件。我们可以看到这种方式的缺点，无法看到模块之间的互相引用关系。
+
+于是，早期的 JavaScript 开发者提出了一些模块化方案，其中最为著名的就是 CommonJS 和 AMD。
+
+- CommonJS：最初由 Node.js 推广，CommonJS 是一种同步模块化规范，适用于服务器端 JavaScript。它通过 require() 函数来引入模块，通过 module.exports 来导出模块。CommonJS 使得开发者能够以模块化的方式组织代码，避免了全局命名空间污染。
+- AMD（Asynchronous Module Definition）：为了适应浏览器环境，AMD 被提出，它支持异步加载模块。AMD 模块通过 define() 函数定义，并支持异步加载依赖，适合浏览器端的前端开发。
+
+随着 JavaScript 的发展，浏览器端也逐渐开始支持模块化。2015 年，ECMAScript 官方标准（也就是 ES6）引入了 ES Module 规范，它提供了一种原生的、静态的模块化方式，成为现代 JavaScript 开发的标准。
+
+- ES Module（ESM）：ES6 模块化通过 import 和 export 关键字引入和导出模块。它是原生支持的模块系统，不需要任何外部库或工具支持，具有更好的性能优化。ES Module 使得 JavaScript 开发变得更加简洁和高效，并成为现代前端开发的主流模块化标准。 -
+
+我们来使用ES Module的方式改写一下：
+index.js
+
+```javascript
+import { message } from './message.js'
+
+var outputContent = document.getElementById('output')
+message.forEach((ms) => {
+  var mslineDom = document.createElement('p')
+  mslineDom.textContent = ms
+  outputContent.appendChild(mslineDom)
+})
+```
+
+message.js
+
+```javascript
+var message = ['Hello, world!', 'Goodbye, world!']
+
+export { message }
+```
+
+index.html
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Frontend Project</title>
+    <!-- 要加上type="module" 才能使用es module-->
+    <script type="module" src="./index.js"></script>
+  </head>
+  <body>
+    <h1>My Simple Frontend Project</h1>
+    <div id="output"></div>
+  </body>
+</html>
+```
+
+#### 步骤 3：引入包管理器
+
+随着软件项目的复杂性增加，很多功能和任务会变得重复且冗长。例如，处理日期、请求 HTTP 数据、管理路由等功能，这些通常是由不同的开发者社区或公司维护并提供的工具和库来实现。
+
+开发者需要一种方式来管理项目中的各种依赖包。
+
+> 依赖是指一个程序或模块在运行时需要其他程序或模块的支持才能正常工作。换句话说，当你开发一个应用时，你可能会使用到其他开发者写的代码、库或工具，来帮助你实现特定的功能。这些外部的代码、库、工具等就是你的“依赖”。
+
+> 包（Package）是指一个或一组文件、功能或库的集合，通常是为了提供某种特定功能而组织和发布的。包可以包括 JavaScript 代码、样式表、图片等资源。每个包通常会包含一个描述文件（如 package.json），其中列出了包的基本信息、依赖关系、使用方式等内容。
+
+包管理器（如 npm）帮助开发者管理项目的依赖，并能够方便地从公共的包仓库（如 npm registry）安装所需的包。它能够自动下载、更新、安装并管理项目中的依赖，确保项目在不同环境中拥有一致的依赖版本。
+
+**初始化 npm 项目**
+
+在项目根目录下，运行以下命令初始化一个新的 npm 项目：
+
+```bash
+npm init -y
+```
+
+这将生成一个 package.json 文件，记录项目的依赖和脚本。
+
+**安装第三方包**
+
+例如，如果我们想要在项目中使用 `lodash` 这个工具库，可以使用以下命令：
+
+```bash
+npm install lodash --save
+```
+
+这会将 lodash 安装到 node_modules 文件夹，并在 package.json 中添加该依赖。安装后，我们可以通过 import 语句引入并使用该包：
+
+```bash
+import _ from 'lodash';
+```
+
+包管理器的另一个重要功能是版本锁定。通过 package-lock.json 文件，npm 会锁定项目中所有依赖的版本，确保团队成员在安装依赖时获取相同的版本。
+
+**使用Babel转译新语法**
+
+为了确保代码在较旧版本的浏览器中能够运行，我们可能需要使用 Babel 来转译最新的 JavaScript 语法（如 async/await、箭头函数等）。
+
+index.js
+
+```javascript
+import { message } from './message.js'
+
+var outputContent = document.getElementById('output')
+message.forEach((ms) => {
+  var mslineDom = document.createElement('p')
+  mslineDom.textContent = ms
+  outputContent.appendChild(mslineDom)
+})
+```
+
+文件里出现的箭头函数就是新语法，这些新语法对于旧版本的浏览器来说是无法理解的，我们就需要`babel`这样的工具来转译。以此类推CSS的转译和处理也需要`css loader`和`postcss`等工具。
+
+**3.2 安装Babel**
+
+Babel也是npm包
+
+```bash
+npm install --save-dev @babel/core @babel/preset-env @babel/cli
+```
+
+@babel/core 和 @babel/preset-env：Babel 的核心工具和用于转译 ES6+ 代码的预设。
+
+@babel/cli
+
+你会发现文件夹里多出了很多文件，例如`package.json`和`package-lock.json`，在`package.json`里可以看到我们刚刚安装的两个依赖
+
+```
+ "devDependencies": {
+    "@babel/cli": "^7.26.4",
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0"
+  }
+```
+
+同时我们可以在`package.json`里配置npm命令
+
+```
+  "scripts": {
+    "build": "babel index.js -d ./dist"
+  }
+```
+
+让babel去处理当前目录下的`index.js`文件，并输出结果到dist文件夹。
+
+除此之外，为了babel能够使用我们的预设包，需要在项目根目录下，创建一个 .babelrc 文件，配置 Babel：
+
+```
+{
+  "presets": ["@babel/preset-env"]
+}
+```
+
+万事俱备，现在我们来试一试babel,在命令行输入`npm run build`，就可以在`dist`目录下看到转译后的兼容旧语法的js文件。
+
+**配置 Webpack**
+
+为什么需要webpack？需要babel的时候用babel,需要css loader的时候就用不就好了吗。
+
+Webpack 提供了一个统一的构建系统，它不仅仅是一个工具，而是一个框架，允许你将所有的构建需求集成到一个流程中。对于一个现代前端应用，通常有以下几种需求：
+
+- 代码转译：使用 Babel 转译 ES6+ 语法。
+- 处理 CSS：通过 CSS Loader 和 PostCSS 处理 CSS 文件。
+- 图片和其他静态资源：优化和压缩图片、字体、SVG 文件等。
+- 模块化支持：前端代码现在通常会使用 ES6 模块化、CommonJS 或 AMD，Webpack 可以帮你处理模块化，并且优化加载顺序和依赖关系。
+
+如果你仅使用 Babel 来转译 JavaScript，CSS、图片等其他资源依然需要分别通过其他工具处理，并且这些工具的集成和管理将变得非常复杂和冗长。
+
+除此之外，webpack还能够通过以下技术提升性能：
+
+- 代码分割（Code Splitting）：Webpack 支持按需加载，能够将代码拆分成多个文件，避免一次性加载过多内容，提升加载速度。
+- 缓存优化：Webpack 支持缓存机制，通过文件名中的哈希值来管理缓存，确保更新后用户能够加载到最新的资源。
+- Tree Shaking：Webpack 可以去除项目中未使用的代码，减小最终打包的文件大小，提高加载速度。
+
+我们来简单试一试webpack，首先
+
+```bash
+npm install --save-dev webpack webpack-cli
+```
+
+在项目根目录下创建一个名为 webpack.config.js 的文件，并配置 Webpack：
+
+```javascript
+const path = require('path')
+
+module.exports = {
+  entry: './src/index.js', // 入口文件
+  output: {
+    filename: 'bundle.js', // 输出文件名
+    path: path.resolve(__dirname, 'dist'), // 输出路径
+  },
+  mode: 'development', // 开发模式（可以设置为 production 用于生产环境）
+}
+```
+
+把`index.js`和`message.js`移到`src`目录下，`index.js`成为项目的入口文件。
+
+引入打包后的 bundle.js 文件：
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Frontend Project</title>
+  </head>
+  <body>
+    <h1>My Simple Frontend Project</h1>
+    <div id="output"></div>
+    <script src="dist/bundle.js"></script>
+  </body>
+</html>
+```
+
+打开 package.json 文件，在 scripts 部分添加一个构建命令：
+
+```
+"scripts": {
+    "build": "webpack"
+  },
+```
+
+最后通过以下命令来执行构建：
+
+```bash
+npm run build
+```
+
+Webpack 会根据 webpack.config.js 配置，将 src/index.js 打包成 dist/bundle.js。
+
+#### 步骤 4：使用脚手架工具（如 create-react-app）
+
+到目前为止，我们已经掌握了如何手动配置 Webpack 和 Babel。接下来，我们将学习如何使用脚手架工具来快速创建一个前端项目。
+
+脚手架工具的好处是它隐藏了许多复杂的配置细节，让开发者可以专注于功能实现。例如，create-react-app 在创建项目时，会自动为你配置好 Webpack、Babel、ESLint、测试框架等工具，让你可以直接开始开发。
+
+**4.1 创建 React 应用**
+
+使用 `create-react-app` 脚手架工具，可以轻松创建一个新的 React 项目：
+
+```bash
+npx create-react-app my-app
+```
+
+这个命令会自动为你创建一个包含 React、Webpack、Babel 等工具的完整项目结构。你只需要关注编写代码。
+
+**4.2 运行 React 项目**
+
+进入项目目录，启动开发服务器：
+
+```bash
+cd my-app
+npm start
+```
+
+浏览器会自动打开，并加载 React 应用程序。你可以开始在 src/App.js 文件中修改代码，React 项目已经配置好所有构建和开发的相关工具。
+
+**4.3 项目结构**
+
+使用 create-react-app 创建的项目会有如下目录结构：
+
+```
+    public/：包含公共资源，比如 index.html。
+    src/：包含 React 组件和 JavaScript 文件。
+    package.json：记录项目依赖、脚本和配置信息。
+    node_modules/：安装的 npm 包。
+```
+
+## 总结
+
+通过本文的学习，我们从最简单的 HTML + JavaScript 项目开始，逐步引入模块化、构建工具（Webpack 和 Babel）以及脚手架工具（create-react-app）。这些步骤帮助我们理解了现代前端开发的核心工具和流程，最终能够使用脚手架工具来快速启动一个完整的前端项目。随着项目的复杂度增加，构建工具和自动化流程将为我们节省大量时间，使得开发变得更加高效和可靠。
+
+### 前端工程化学习的顺序
+
+前端工程化的学习顺序是从模块化开始，逐步深入到包管理器、构建工具、再到脚手架。这些概念和工具是层层递进的，每个步骤为下一个步骤提供必要的基础，形成一个清晰的学习路径。
+
+#### 模块化
+
+模块化是现代前端开发中的一个重要概念，它帮助开发者将代码分割成独立且易于管理的小部分。通过模块化，开发者能够清晰地组织代码，使得不同功能的代码可以分布在不同的文件中，避免了冗长且不易维护的单一大文件。模块化通常通过不同的标准实现，如 CommonJS、ES Module、AMD、CMD、UMD 等，每个标准有不同的适用场景和功能。在实际开发中，ES Module 是最常见的标准。
+
+#### 包管理器
+
+随着项目模块化的推进，开发者需要一种方式来管理项目中的各种依赖包。包管理器（如 npm、yarn、pnpm 等）帮助开发者下载、安装和管理这些模块。包管理器使得项目的依赖管理更加高效、清晰，并且可以轻松地在多个开发环境之间保持一致的依赖版本。
+
+#### 构建工具
+
+随着项目规模的增大，仅仅依赖模块化和包管理器可能无法满足生产环境中的需求。此时，构建工具（如 Webpack、Rollup、Vite 等）显得尤为重要。构建工具不仅能够帮助打包、压缩代码，处理依赖，还能够优化前端资源，确保代码在生产环境中能够高效运行。构建工具能够实现代码分割、资源压缩、热更新等功能，大大提高了开发效率。
+
+Webpack 是最流行的构建工具之一，它通过加载器（Loader）和插件（Plugin）来处理和优化代码和资源。Webpack 会将开发中的各种文件（如 JavaScript、CSS、图片等）打包成一个或多个文件，供浏览器加载。Webpack 的强大之处在于它的灵活性和扩展性，开发者可以根据项目需求自由配置其打包流程。
+
+#### 脚手架
+
+脚手架工具（如 create-react-app、Vue CLI、Angular CLI 等）为前端项目提供了自动化的项目初始化模板，帮助开发者快速搭建一个前端应用的基础框架。脚手架工具集成了常用的构建工具和配置，使得开发者可以专注于功能开发，而无需从零开始配置项目。这种自动化的项目初始化方式极大地减少了开发者的重复工作。
+
+前端工程化的学习路径从模块化开始，逐步深入到包管理器、构建工具，再到脚手架工具。通过逐步掌握这些工具，开发者可以应对各种项目的需求，并在开发过程中实现更高效、更有组织的工作流。
