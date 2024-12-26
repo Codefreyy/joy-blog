@@ -1,8 +1,6 @@
 import Link from '@/components/Link'
-import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
-import NewsletterForm from 'pliny/ui/NewsletterForm'
 import Image from 'next/image'
 
 const MAX_DISPLAY = 5
@@ -20,13 +18,13 @@ export default function Home({ posts }) {
           alt="tea-cup"
         />
       </div>
-      <Link
+      {/* <Link
         href={'https://joy-peng-portfolio.vercel.app'}
         target="_blank"
         className=" animate-bounce text-gray-500 underline underline-offset-2 hover:text-gray-400 hover:no-underline dark:text-gray-400 dark:hover:text-gray-300"
       >
         Portfolio传送门
-      </Link>
+      </Link> */}
 
       <h2 className="mt-10 text-xl font-extrabold">最近文章</h2>
 
@@ -69,7 +67,7 @@ export default function Home({ posts }) {
             className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
             aria-label="All posts"
           >
-            查看全部 &rarr;
+            查看全部 ={'>'}
           </Link>
         </div>
       )}
