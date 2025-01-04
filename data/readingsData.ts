@@ -8,6 +8,13 @@ const readingsData = {
     { title: '你不知道的JavaScript（上卷）', status: 'done' },
     { title: '你不知道的JavaScript（中卷）', status: 'done' },
   ],
+  TypeScript: [
+    {
+      title: 'TypeScript and Vue 3',
+      status: 'done',
+      href: 'https://frontendmasters.com/courses/vue-typescript/',
+    },
+  ],
   框架: [
     {
       title: 'Build a frontend framework (from scratch)',
@@ -60,6 +67,10 @@ const readingsData = {
     {
       title: '「前端工程化」之 Webpack 原理与实践 - B站',
       href: 'https://www.bilibili.com/video/BV1kP41177wp?spm_id_from=333.788.videopod.episodes&vd_source=df5b58e116cad75d6d81a2ef180dbe23',
+    },
+    {
+      title: 'vite - frontend masters',
+      href: 'https://frontendmasters.com/courses/vite/',
     },
   ],
   数据结构与算法: [
