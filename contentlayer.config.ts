@@ -7,7 +7,7 @@ import { fromHtmlIsomorphic } from 'hast-util-from-html-isomorphic'
 
 // Remark packages
 
-// import { remarkAlert } from 'remark-github-blockquote-alert'
+import { remarkAlert } from 'remark-github-blockquote-alert'
 import {
   remarkExtractFrontmatter,
   remarkCodeTitles,
@@ -176,7 +176,7 @@ export default makeSource({
       remarkCodeTitles,
       remarkMath,
       remarkImgToJsx,
-      // remarkAlert,
+      remarkAlert,
     ],
     rehypePlugins: [
       rehypeSlug,
@@ -190,16 +190,16 @@ export default makeSource({
           content: icon,
         },
       ],
-      // [
-      //   rehypeAutolinkHeadings,
-      //   {
-      //     behavior: 'prepend',
-      //     headingProperties: {
-      //       className: ['content-header'],
-      //     },
-      //     content: icon,
-      //   },
-      // ],
+      [
+        rehypeAutolinkHeadings,
+        {
+          behavior: 'prepend',
+          headingProperties: {
+            className: ['content-header'],
+          },
+          content: icon,
+        },
+      ],
       rehypeKatex,
       [rehypeCitation, { path: path.join(root, 'data') }],
       [rehypePrismPlus, { defaultLanguage: 'js', ignoreMissing: true }],
