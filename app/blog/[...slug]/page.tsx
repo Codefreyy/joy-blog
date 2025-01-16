@@ -130,7 +130,6 @@ export default async function Page({ params }: { params: { slug: string[] } }) {
       })
     : []
 
-  console.log(updatedToc, 'updatedToc')
   const authorList = post?.authors || ['default']
   const authorDetails = authorList.map((author) => {
     const authorResults = allAuthors.find((p) => p.slug === author)

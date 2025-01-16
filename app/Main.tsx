@@ -37,20 +37,19 @@ export default function Home({ posts }) {
               <Link key={slug} href={`/blog/${slug}`}>
                 <li className="transform cursor-pointer   transition-transform hover:scale-101 hover:bg-[#fcfbfa] dark:hover:bg-[#2b2e40]">
                   <article className="group">
-                    <div className="mb-1 space-y-5 rounded-lg px-3 py-5  xl:col-span-3">
-                      <div>
-                        <h2 className="text-xl font-bold leading-8 tracking-tight group-hover:text-primary-500">
-                          {title}
-                        </h2>
-                        <dl>
-                          <dt className="sr-only">Published on</dt>
-                          <dd className="text-sm font-medium leading-6 text-gray-500 dark:text-gray-400">
-                            <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
-                          </dd>
-                        </dl>
-                        <div className="prose-sm max-w-none text-gray-500 dark:text-gray-400">
-                          {summary}
-                        </div>
+                    <div className="mb-1 space-y-2 rounded-lg px-3 py-5  xl:col-span-3">
+                      <h2 className="text-xl font-bold leading-8 tracking-tight group-hover:text-primary-500">
+                        {title}
+                      </h2>
+
+                      <dl>
+                        <dt className="sr-only">Published on</dt>
+                        <dd className="text-sm font-medium leading-6 text-gray-500 dark:text-gray-400">
+                          <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                        </dd>
+                      </dl>
+                      <div className="prose-sm max-w-none text-gray-500 dark:text-gray-400">
+                        {summary}
                       </div>
                     </div>
                   </article>

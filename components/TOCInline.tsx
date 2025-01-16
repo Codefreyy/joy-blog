@@ -161,10 +161,12 @@ const TOCInline = ({
           >
             Table of Contents
           </summary>
-          <div className={rightAlign ? 'mr-6' : 'ml-6'}>{createList(nestedList)}</div>
+          <div className={`${rightAlign ? 'mr-6' : 'ml-6'} h-[700px] overflow-y-auto`}>
+            {createList(nestedList)}
+          </div>
         </details>
       ) : (
-        createList(nestedList)
+        <div className="h-[700px] overflow-y-auto">{createList(nestedList)}</div>
       )}
     </>
   )
