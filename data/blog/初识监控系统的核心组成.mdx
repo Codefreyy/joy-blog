@@ -1,0 +1,188 @@
+---
+title: '初识监控系统的核心组成'
+
+date: '2025-02-21'
+
+lastmod: '2025-02-21'
+
+tags: ['前端监控']
+
+draft: false
+
+layout: 'PostSimple'
+
+summary: ''
+---
+
+和朋友去江西玩了一圈又北上去武汉找了大学同学和之前在蔚来实习的朋友，终于回宁德啦。接下来二十几天预习一下前端监控的知识～
+
+前端监控系统的核心组成可以分为 数据采集、上报、存储、分析、报警 五个关键环节。
+
+### 数据采集（Data Collection）
+
+数据采集是监控系统的基础，负责从用户端（浏览器、移动端等）收集各类监控数据。数据采集的完整性和准确性直接决定后续环节的有效性。
+主要数据类型：
+
+#### 性能数据：
+
+1. 关键指标：FCP、LCP、CLS、FID、TTFB、DNS 解析时间、TCP 连接时间等。
+2. 采集方式：通过 Performance API（如 PerformanceObserver）获取。
+
+```javascript
+const observer = new PerformanceObserver((list) => {
+  list.getEntries().forEach((entry) => {
+    console.log(entry.entryType, entry.name)
+  })
+})
+observer.observe({ type: 'largest-contentful-paint', buffered: true })
+```
+
+#### 错误数据：
+
+1. 错误类型：JavaScript 错误、资源加载错误、Promise 异常、跨域脚本错误等。
+2. 采集方式：通过全局错误监听（window.onerror、window.addEventListener('error')、unhandledrejection）。
+
+```javascript
+window.addEventListener('error', (error) => {
+  console.error('Captured Error:', error.message)
+})
+```
+
+#### 用户行为数据
+
+1. 行为类型：点击、滚动、页面跳转、表单输入、停留时长等。
+2. 采集方式：通过事件监听（如 click、scroll）、MutationObserver 或用户行为录制工具（如 rrweb）。
+
+```javascript
+document.addEventListener('click', (event) => {
+  console.log('User clicked:', event.target)
+})
+```
+
+3. 环境数据：
+   数据类型：设备信息（UA、屏幕分辨率）、网络类型（4G/Wi-Fi）、地理位置等。
+   采集方式：通过 navigator 对象和浏览器 API（如 Network Information API）。
+
+### 数据上报（Data Reporting）
+
+数据上报是将采集到的数据发送到服务器的过程，需要兼顾 可靠性（数据不丢失）和 性能（不影响用户体验）。
+
+上报策略：
+
+1. 立即上报：
+
+- 适用于关键错误或高优先级数据（如崩溃日志）。
+- 缺点：可能影响页面性能。
+- 技术实现：直接调用 fetch 或 XMLHttpRequest。
+
+2. 批量上报：
+
+- 将数据缓存到本地，达到一定数量或时间间隔后批量发送。
+- 优点：减少网络请求次数。
+- 技术实现：使用 localStorage 或 IndexedDB 缓存数据。
+
+3. 页面卸载时上报：
+
+- 在用户离开页面时发送数据（如 beforeunload 事件）。
+- 技术实现：使用 navigator.sendBeacon。
+
+```javascript
+window.addEventListener('unload', () => {
+  const data = { event: 'page_unload' }
+  navigator.sendBeacon('/log', JSON.stringify(data))
+})
+```
+
+4. 优化技巧：
+
+- 失败重试：对上报失败的数据进行重试（指数退避算法）。
+- 数据压缩：使用 gzip 或 Protocol Buffers 减少数据体积。
+- 优先级队列：区分高低优先级数据，确保关键数据优先上报。
+
+### 数据存储（Data Storage）
+
+数据存储是将上报的数据持久化到数据库或日志系统中，便于后续查询和分析。存储方案需满足 高吞吐量 和 低成本。
+
+常见存储方案：
+
+1. 时序数据库（Time-Series Database）：
+
+- 特点：擅长处理时间序列数据（如性能指标）。
+- 工具：InfluxDB、Prometheus、TimescaleDB。
+- 适用场景：性能监控、实时分析。
+
+2. 日志系统：
+
+- 特点：适合存储原始日志数据（如错误日志、用户行为）。
+- 工具：Elasticsearch + Logstash + Kibana（ELK 栈）。
+- 适用场景：错误追踪、行为分析。
+
+3. 关系型数据库：
+
+- 特点：结构化数据存储（如用户信息、元数据）。
+- 工具：MySQL、PostgreSQL。
+- 适用场景：关联数据分析。
+
+4. 大数据平台：
+
+- 特点：处理海量数据（如 PB 级数据）。
+- 工具：Hadoop、Spark、BigQuery。
+- 适用场景：长期趋势分析、机器学习。
+
+### 数据分析（Data Analysis）
+
+数据分析是从存储的数据中提取有价值的信息，通常通过可视化工具展示结果，帮助开发者快速定位问题。
+
+分析方向：
+
+1. 性能分析：
+
+- 统计页面加载时间的分布（如 LCP 的 P75、P95）。
+- 分析慢请求的根因（如 CDN 问题、第三方脚本阻塞）。
+
+2. 错误分析：
+
+- 聚合相同错误的出现次数、影响用户数。
+- 通过 Source Map 定位错误的具体代码位置。
+
+3. 用户行为分析：
+
+- 分析用户路径转化率（如注册流程的流失点）。
+- 识别高频操作或异常行为（如连续点击按钮）。
+
+可视化工具：
+
+1. 通用仪表盘：
+
+- 工具：Grafana、Kibana。
+- 示例：展示实时性能指标（如 FCP 趋势图）。
+
+2. 用户行为热力图：
+
+- 工具：Hotjar、FullStory。
+- 示例：显示页面点击密度图。
+
+3. 自定义报表
+
+- 工具：Tableau、Power BI。
+- 示例：生成周级性能报告。
+
+### 报警（Alerting）
+
+报警是监控系统的最后一步，当监控数据超过预设阈值时，通知开发者及时处理问题。
+
+报警策略：
+
+1. 阈值报警：
+
+- 例如：LCP 超过 2.5 秒触发报警。
+- 实现工具：Prometheus Alertmanager、ElastAlert。
+
+2. 异常检测报警：
+
+- 基于历史数据自动识别异常（如 CPU 使用率突然飙升）。
+- 实现工具：机器学习模型（如 Prophet、TensorFlow）。
+
+3. 组合条件报警：
+
+- 例如：错误率 > 1% 且 影响用户数 > 100 时触发报警。
