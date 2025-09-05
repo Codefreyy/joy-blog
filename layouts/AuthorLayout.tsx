@@ -36,11 +36,7 @@ export default function AuthorLayout({ children, content }: Props) {
             </div>
           </div>
           <div className="prose max-w-none pb-8 pt-8 dark:prose-invert xl:col-span-2">
-            <p>
-              {' '}
-              Hi there, I'm Yujie Peng. Welcome to my corner of the Internet.I write about tech,
-              thought, and life in general.
-            </p>
+            <p> Hi there, I'm Yujie Peng. Welcome to my corner of the Internet.</p>
             {children}
           </div>
         </div>
